@@ -10,3 +10,5 @@ PROCEDURE AddNumbers
 
 	Return lnResult
 ENDPROC
+
+EndDefine 
