@@ -31,6 +31,7 @@ namespace MBS.FoxPro
         private TestCallback callback;
         private int retries = 0;
         private bool retryAfterError;
+        public int ProcessId;
 
         public FoxNet(string key, IFoxApp foxApp = null, int foxTimeout = 60, bool debugMode = false, bool usingPool = false)
         {
@@ -392,6 +393,7 @@ namespace MBS.FoxPro
                         foxCOM = Activator.CreateInstance(Type.GetTypeFromProgID("FoxCOM.Application", true));
                         foxCOM.VFP.Visible = true;  // only visible in development or for IIS user
                     }
+                    ProcessId = foxCOM.VFP.ProcessId;
 
                     // Set callback so FoxPro can test if DotNet process is still alive
                     callback = new TestCallback();
