@@ -18,17 +18,16 @@ namespace MBS.FoxPro
         public static volatile int poolCount = 0;
 
         public static int PoolSize { get; set; }
-        public static IFoxApp FoxApp { get; set; }
         public static bool DebugMode { get; set; }
         // Seconds before inactive FoxCOM object is released
         public static int FoxTimeout { get; set; }
+        private static Type FoxAppType { get; set; }
 
         static FoxPool()
         {
             pool = new ConcurrentDictionary<string, FoxNet>();
             // Set defaults
             PoolSize = Environment.ProcessorCount;
-            FoxApp = null;
             DebugMode = false;
             FoxTimeout = 30;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
@@ -78,7 +77,8 @@ namespace MBS.FoxPro
                     {
                         instCount++;
                         Debug.WriteLine("GetObject() not found: " + key);
-                        foxNet = new FoxNet(key, FoxApp, FoxTimeout, DebugMode, true);
+                        IFoxApp foxApp = CreateFoxAppObject();
+                        foxNet = new FoxNet(key, foxApp, FoxTimeout, DebugMode, true);
                         break;
                     }
                     else
@@ -183,7 +183,32 @@ namespace MBS.FoxPro
                 poolEnabled = true;
             }
         }
-        
+
+        // Set type/class for FoxApp to be created later
+        public static void SetFoxAppType<TFoxApp>()
+            where TFoxApp: IFoxApp, new()
+        {
+            FoxAppType = typeof(TFoxApp);
+        }
+
+        // Reset FoxAppType to null, so that no FoxApp object will be created
+        public static void ResetFoxAppType()
+        {
+            FoxAppType = null;
+        }
+
+        // Create FoxApp object when FoxNet is added to pool
+        private static IFoxApp CreateFoxAppObject()
+        {
+            IFoxApp foxApp = null;
+            if (!(FoxAppType is null))
+            {
+                foxApp = (IFoxApp)Activator.CreateInstance(FoxAppType);
+            }
+
+            return foxApp;
+        }
+
         // Format object key consistently so it can be 
         private static string FormatKey(string objectKey)
         {

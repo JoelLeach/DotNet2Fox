@@ -56,27 +56,27 @@ namespace MBS.FoxPro.Tests
         public void PoolLowLoadFoxAppTest()
         {
             FoxPool.DebugMode = true;
-            FoxPool.FoxApp = new FoxNetTestApp();
+            FoxPool.SetFoxAppType<FoxNetTestApp>();
             LoadTest(50);
-            FoxPool.FoxApp = null;
+            FoxPool.ResetFoxAppType();
         }
 
         [TestMethod()]
         public void PoolHeavyLoadFoxAppTest()
         {
             FoxPool.DebugMode = true;
-            FoxPool.FoxApp = new FoxNetTestApp();
+            FoxPool.SetFoxAppType<FoxNetTestApp>();
             LoadTest(500);
-            FoxPool.FoxApp = null;
+            FoxPool.ResetFoxAppType();
         }
 
         [TestMethod()]
         public void PoolHeavyLoadFoxAppNoDebugTest()
         {
             FoxPool.DebugMode = false;
-            FoxPool.FoxApp = new FoxNetTestApp();
+            FoxPool.SetFoxAppType<FoxNetTestApp>();
             LoadTest(500);
-            FoxPool.FoxApp = null;
+            FoxPool.ResetFoxAppType();
         }
 
         private void TimeoutTest()
@@ -112,18 +112,18 @@ namespace MBS.FoxPro.Tests
         public void PoolTimeoutFoxAppTest()
         {
             FoxPool.DebugMode = true;
-            FoxPool.FoxApp = new FoxNetTestApp();
+            FoxPool.SetFoxAppType<FoxNetTestApp>();
             TimeoutTest();
-            FoxPool.FoxApp = null;
+            FoxPool.ResetFoxAppType();
         }
 
         [TestMethod()]
         public void PoolTimeoutFoxAppNoDebugTest()
         {
             FoxPool.DebugMode = false;
-            FoxPool.FoxApp = new FoxNetTestApp();
+            FoxPool.SetFoxAppType<FoxNetTestApp>();
             TimeoutTest();
-            FoxPool.FoxApp = null;
+            FoxPool.ResetFoxAppType();
         }
 
     }
