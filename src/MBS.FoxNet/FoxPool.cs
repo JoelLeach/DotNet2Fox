@@ -21,6 +21,7 @@ namespace MBS.FoxPro
         public static bool DebugMode { get; set; }
         // Seconds before inactive FoxCOM object is released
         public static int FoxTimeout { get; set; }
+        public static bool RecycleOtherKeys { get; set; }
         private static Type FoxAppType { get; set; }
 
         static FoxPool()
@@ -30,6 +31,7 @@ namespace MBS.FoxPro
             PoolSize = Environment.ProcessorCount;
             DebugMode = false;
             FoxTimeout = 30;
+            RecycleOtherKeys = false;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
         }
 
@@ -63,8 +65,10 @@ namespace MBS.FoxPro
                     // Prefer objects that start with key
                     foxNet = GetObjectFromPool(key);
 
-                    // If none found, use one of the other objects in the pool
-                    if (foxNet == null)
+                    // If none found, optionally recycle one of the other objects in the pool with a different key
+                    // Recycling can reduce loading times, but it can also cause problems if the Fox app is not prepared 
+                    // to handle a different key.
+                    if (foxNet == null && RecycleOtherKeys)
                     {
                         foxNet = GetObjectFromPool();
                     }
