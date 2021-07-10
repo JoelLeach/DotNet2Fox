@@ -67,7 +67,7 @@
     <None Include="FoxCode\FoxNetTest.PRG" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MBS.FoxPro\DotNet2Fox.csproj">
+    <ProjectReference Include="..\..\src\DotNet2Fox\DotNet2Fox.csproj">
       <Project>{1be22952-953b-4262-920b-5c10c8a81e1c}</Project>
       <Name>DotNet2Fox</Name>
     </ProjectReference>
