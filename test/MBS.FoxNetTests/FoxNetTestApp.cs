@@ -1,4 +1,4 @@
-﻿using MBS.FoxPro;
+﻿using DotNet2Fox;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MBS.FoxPro.Tests
+namespace DotNet2Fox.Tests
 {
     class FoxNetTestApp : IFoxApp
     {

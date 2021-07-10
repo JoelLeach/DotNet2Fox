@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MBS.FoxPro;
+using DotNet2Fox;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace MBS.FoxPro.Tests
+namespace DotNet2Fox.Tests
 {
     [TestClass()]
     public class FoxPoolTests

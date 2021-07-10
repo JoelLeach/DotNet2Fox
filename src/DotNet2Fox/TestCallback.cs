@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
-namespace MBS.FoxPro
+namespace DotNet2Fox
 {
     [ComVisible(true)]
     public class TestCallback

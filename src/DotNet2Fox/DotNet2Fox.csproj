@@ -7,8 +7,8 @@
     <ProjectGuid>{1BE22952-953B-4262-920B-5C10C8A81E1C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MBS.FoxPro</RootNamespace>
-    <AssemblyName>MBS.FoxPro</AssemblyName>
+    <RootNamespace>DotNet2Fox</RootNamespace>
+    <AssemblyName>DotNet2Fox</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>

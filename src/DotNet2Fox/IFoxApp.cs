@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MBS.FoxPro
+namespace DotNet2Fox
 {
 
     public interface IFoxApp

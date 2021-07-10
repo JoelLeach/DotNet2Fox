@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Timers;
 using Microsoft.CSharp.RuntimeBinder;
 
-namespace MBS.FoxPro
+namespace DotNet2Fox
 {
     public class FoxNet : IDisposable
     {

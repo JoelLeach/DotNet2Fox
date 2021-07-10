@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace MBS.FoxPro
+namespace DotNet2Fox
 {
     public class FoxPool
     {
