@@ -62,15 +62,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MBS.FoxNet\MBS.FoxPro.csproj">
-      <Project>{1BE22952-953B-4262-920B-5C10C8A81E1C}</Project>
-      <Name>MBS.FoxPro</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="FoxCode\addnumbers.PRG" />
     <None Include="FoxCode\errortest.PRG" />
     <None Include="FoxCode\FoxNetTest.PRG" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MBS.FoxPro\MBS.FoxPro.csproj">
+      <Project>{1be22952-953b-4262-920b-5c10c8a81e1c}</Project>
+      <Name>MBS.FoxPro</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
