@@ -89,7 +89,7 @@ namespace DotNet2Fox.Tests
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
-                var result = fox.CallMethod("AddNumbers", "FoxNetTest", "FoxNetTest.vcx", "", 2, 3);
+                var result = fox.CallMethod("AddNumbers", "FoxTest", "FoxTest.vcx", "", 2, 3);
                 Assert.AreEqual(result, 5);
             }
         }
@@ -113,7 +113,7 @@ namespace DotNet2Fox.Tests
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
-                var foxTest = fox.CreateNewObject("FoxNetTest", "FoxNetTest.vcx");
+                var foxTest = fox.CreateNewObject("FoxTest", "FoxTest.vcx");
                 var result = foxTest.AddNumbers(2, 3);
                 Assert.AreEqual(result, 5);
             }
