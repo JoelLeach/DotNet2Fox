@@ -10,7 +10,7 @@ using System.IO;
 namespace DotNet2Fox.Tests
 {
     [TestClass()]
-    public class FoxNetTests
+    public class FoxTests
     {
 
         // Location of FoxPro code to execute
@@ -19,19 +19,19 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void DoCmdTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
-                fox.DoCmd("? 'FoxNet Unit Test'");
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("? 'Fox Unit Test'");
             }
         }
 
         [TestMethod()]
         public void EvalTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 var result = fox.Eval("1+1");
                 Assert.AreEqual(result, 2);
             }
@@ -40,9 +40,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void EvalNoDebugTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, false))
+            using (Fox fox = new Fox("FoxTests", null, 60, false))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 var result = fox.Eval("1+1");
                 Assert.AreEqual(result, 2);
             }
@@ -51,9 +51,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void DoPRGTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 fox.Do("AddNumbers", "", 2, 3);
             }
@@ -62,9 +62,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void CallFunctionTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 var result = fox.Call("Lower", "FOXNETTEST");
                 Assert.AreEqual(result, "foxnettest");
             }
@@ -73,9 +73,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void CallPRGTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var result = fox.Call("AddNumbers", 2, 3);
                 Assert.AreEqual(result, 5);
@@ -85,9 +85,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void CallMethodVCXTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var result = fox.CallMethod("AddNumbers", "FoxNetTest", "FoxNetTest.vcx", "", 2, 3);
                 Assert.AreEqual(result, 5);
@@ -97,9 +97,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void CallMethodPRGTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var result = fox.CallMethod("AddNumbers", "FoxNetTest", "FoxNetTest.prg", "", 2, 3);
                 Assert.AreEqual(result, 5);
@@ -109,9 +109,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void CreateObjectVCXTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var foxTest = fox.CreateNewObject("FoxNetTest", "FoxNetTest.vcx");
                 var result = foxTest.AddNumbers(2, 3);
@@ -122,9 +122,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void CreateObjectPRGTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var foxTest = fox.CreateNewObject("FoxNetTest", "FoxNetTest.prg");
                 var result = foxTest.AddNumbers(2, 3);
@@ -144,9 +144,9 @@ namespace DotNet2Fox.Tests
 
                             Return lnResult";
 
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 var result = fox.ExecScript(script, 2, 3);
                 Assert.AreEqual(result, 5);
             }
@@ -155,9 +155,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void ErrorTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 try
                 {
@@ -165,7 +165,7 @@ namespace DotNet2Fox.Tests
                 }
                 catch (Exception e)
                 {
-                    Assert.AreEqual(e.Message, "FoxNet Test Error");
+                    Assert.AreEqual(e.Message, "Fox Test Error");
                 }
             }
         }
@@ -173,9 +173,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void ErrorNoDebugTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", null, 60, false))
+            using (Fox fox = new Fox("FoxTests", null, 60, false))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 try
                 {
@@ -183,7 +183,7 @@ namespace DotNet2Fox.Tests
                 }
                 catch (Exception e)
                 {
-                    Assert.AreEqual(e.Message, "FoxNet Test Error");
+                    Assert.AreEqual(e.Message, "Fox Test Error");
                 }
             }
         }
@@ -191,9 +191,9 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void FoxAppTest()
         {
-            using (Fox fox = new Fox("FoxNetTests", new FoxNetTestApp(), 60, true))
+            using (Fox fox = new Fox("FoxTests", new FoxNetTestApp(), 60, true))
             {
-                fox.StartRequest("FoxNetTests");
+                fox.StartRequest("FoxTests");
                 var result = fox.Eval("2 + 3");
                 Assert.AreEqual(result, 5);
             }

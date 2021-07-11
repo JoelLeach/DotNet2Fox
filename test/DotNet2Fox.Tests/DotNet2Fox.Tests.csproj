@@ -57,7 +57,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="FoxNetTestApp.cs" />
-    <Compile Include="FoxNetTests.cs" />
+    <Compile Include="FoxTests.cs" />
     <Compile Include="FoxPoolTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
