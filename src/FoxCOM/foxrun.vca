@@ -1,0 +1,260 @@
+SCCTEXT Version 4.0.0.2
+PLATFORM C(8,0),UNIQUEID C(10,0),TIMESTAMP N(10,0),CLASS M(4,0),CLASSLOC M(4,0),BASECLASS M(4,0),OBJNAME M(4,0),PARENT M(4,0),PROPERTIES M(4,0),PROTECTED M(4,0),METHODS M(4,0),OBJCODE M(4,0),OLE M(4,0),OLE2 M(4,0),RESERVED1 M(4,0),RESERVED2 M(4,0),RESERVED3 M(4,0),RESERVED4 M(4,0),RESERVED5 M(4,0),RESERVED6 M(4,0),RESERVED7 M(4,0),RESERVED8 M(4,0),USER M(4,0)
+1252
+
+[ RECORD]
+[PLATFORM] COMMENT 
+[UNIQUEID] Class     
+[START RESERVED1]
+VERSION =   3.00[END RESERVED1]
+
+[ RECORD]
+[PLATFORM] WINDOWS 
+[UNIQUEID] _3UF0XLJG5
+[CLASS] custom
+[BASECLASS] custom
+[OBJNAME] foxrun
+[START PROPERTIES]
+Name = "foxrun"
+_memberdata =      707<VFPData><memberdata name="createparameterclause" display="CreateParameterClause"/><memberdata name="call" display="Call"/><memberdata name="callmethod" display="CallMethod"/><memberdata name="do" display="Do"/><memberdata name="docmd" display="DoCmd"/><memberdata name="eval" display="Eval"/><memberdata name="execscript" display="ExecScript"/><memberdata name="createnewobject" display="CreateNewObject"/><memberdata name="factory" display="Factory"/><memberdata name="lquitondestroy" display="lQuitOnDestroy"/><memberdata name="geterrormessage" display="GetErrorMessage"/><memberdata name="osession" display="oSession"/><memberdata name="setprivatedatasession" display="SetPrivateDataSession"/></VFPData>
+lquitondestroy = .F.
+osession = .F.
+[END PROPERTIES]
+[START PROTECTED]
+createparameterclause
+setprivatedatasession
+[END PROTECTED]
+[START METHODS]
+PROCEDURE Destroy
+* Optionally quit when object destroyed
+Debugout Time(0), Program()
+
+If This.lQuitOnDestroy
+	Quit
+EndIf 
+
+ENDPROC
+PROCEDURE Init
+This.SetPrivateDataSession()
+
+Return DoDefault()
+ENDPROC
+PROCEDURE call
+* Execute/call function
+Lparameters lcFunction, tPar1, tPar2, tPar3, tPar4, tPar5, tPar6, ;
+	tPar7, tPar8, tPar9, tPar10, tPar11, tPar12, tPar13, ;
+	tPar14, tPar15, tPar16, tPar17, tPar18, tPar19, tPar20, ;
+	tPar21, tPar22, tPar23, tPar24, tPar25
+Local lcParameterClause, lcFunctionCall
+
+lcParameterClause = This.CreateParameterClause(Pcount() - 1)
+
+Debugout Time(0), Program(), lcFunction, lcParameterClause 
+	
+lcFunctionCall = Alltrim(lcFunction)+ "(" + lcParameterClause + ")"
+Return &lcFunctionCall
+
+
+ENDPROC
+PROCEDURE callmethod
+* Instantiate object and execute/call class method.
+Lparameters lcMethod, lcClassName, lcModule, lcInApplication, ;
+	tPar1, tPar2, tPar3, tPar4, tPar5, tPar6, ;
+	tPar7, tPar8, tPar9, tPar10, tPar11, tPar12, tPar13, ;
+	tPar14, tPar15, tPar16, tPar17, tPar18, tPar19, tPar20, ;
+	tPar21, tPar22
+Local lcParameterClause, lcMethodCall, loObject
+	
+lcInApplication = Evl(lcInApplication, "")
+lcParameterClause = This.CreateParameterClause(Pcount() - 4)
+
+Debugout Time(0), Program(), lcMethod, lcClassName, lcModule, lcInApplication, lcParameterClause 
+	
+loObject = NewObject(lcClassName, lcModule, lcInApplication)
+lcMethodCall = Alltrim(lcMethod)+ "(" + lcParameterClause + ")"
+Return loObject.&lcMethodCall
+
+
+ENDPROC
+PROCEDURE createnewobject
+* Create and return new object.
+Lparameters lcClassName, lcModule, lcInApplication, ;
+	tPar1, tPar2, tPar3, tPar4, tPar5, tPar6, ;
+	tPar7, tPar8, tPar9, tPar10, tPar11, tPar12, tPar13, ;
+	tPar14, tPar15, tPar16, tPar17, tPar18, tPar19, tPar20, ;
+	tPar21, tPar22, tPar23
+Local lcParameterClause, lnPCount, loObject
+	
+lcInApplication = Evl(lcInApplication, "")
+
+lnPCount = Pcount() - 3
+If lnPCount > 0
+	lcParameterClause = This.CreateParameterClause(Pcount() - 3)
+	Debugout Time(0), Program(), lcClassName, lcModule, lcInApplication, lcParameterClause 
+	loObject = NewObject(lcClassName, lcModule, lcInApplication, &lcParameterClause)
+Else 
+	Debugout Time(0), Program(), lcClassName, lcModule, lcInApplication
+	loObject = NewObject(lcClassName, lcModule, lcInApplication)
+EndIf 
+
+Return loObject
+
+ENDPROC
+PROCEDURE createparameterclause
+* Create parameter clause with specified number of parameters
+* Pass in parameter variables by reference ("out" variables)
+Lparameters lnPCount
+Local lnParameter, lcParameter, lcParameterClause
+
+Debugout Time(0), Program()
+
+lcParameterClause = ""
+For lnParameter = 1 to lnPCount
+	lcParameter = "tPar" + Transform(lnParameter)
+	If !Empty(lcParameterClause)
+		lcParameterClause = lcParameterClause + ", "
+	EndIf 
+	lcParameterClause = lcParameterClause + lcParameter
+EndFor 
+
+Return lcParameterClause
+
+
+ENDPROC
+PROCEDURE do
+* Execute program
+Lparameters lcPRG, lcInProgram, tPar1, tPar2, tPar3, tPar4, tPar5, tPar6, ;
+	tPar7, tPar8, tPar9, tPar10, tPar11, tPar12, tPar13, ;
+	tPar14, tPar15, tPar16, tPar17, tPar18, tPar19, tPar20, ;
+	tPar21, tPar22, tPar23, tPar24
+Local lcParameterClause, lnPCount
+
+lcInProgram = Evl(lcInProgram, "")
+
+lnPCount = Pcount() - 2
+If lnPCount > 0
+	lcParameterClause = This.CreateParameterClause(lnPCount)
+	* DO passes all parameters by reference, so strip out "@" to avoid syntax error
+*JAL*		lcParameterClause = Chrtran(lcParameterClause, "@", "")
+	Debugout Time(0), Program(), lcPRG, lcInProgram, lcParameterClause 	
+? Time(0), Program(), lcPRG, lcInProgram, lcParameterClause 		
+	Do (lcPRG) in (lcInProgram) with &lcParameterClause
+Else 
+	Debugout Time(0), Program(), lcPRG, lcInProgram
+	Do (lcPRG) in (lcInProgram)
+EndIf 
+
+* No return value from DO command, so always .T.
+ENDPROC
+PROCEDURE docmd
+Lparameters lcCommand
+
+Debugout Time(0), Program(), lcCommand
+
+&lcCommand
+
+* Return _VFP.DoCmd(lcCommand)
+
+
+ENDPROC
+PROCEDURE eval
+Lparameters lcExpression
+
+Debugout Time(0), Program(), lcExpression
+
+Return Evaluate(lcExpression)
+* Return _VFP.Eval(lcExpression)
+ENDPROC
+PROCEDURE execscript
+* Execute script on worker
+Lparameters lcScript, tPar1, tPar2, tPar3, tPar4, tPar5, tPar6, ;
+	tPar7, tPar8, tPar9, tPar10, tPar11, tPar12, tPar13, ;
+	tPar14, tPar15, tPar16, tPar17, tPar18, tPar19, tPar20, ;
+	tPar21, tPar22, tPar23, tPar24, tPar25
+Local lcParameterClause, lnPCount
+	
+lnPCount = Pcount() - 1
+If lnPCount > 0
+	lcParameterClause = This.CreateParameterClause(lnPCount)
+	Debugout Time(0), Program(), "(Script)", lcParameterClause 
+	Return ExecScript(lcScript, &lcParameterClause)
+Else
+	Debugout Time(0), Program(), "(Script)"
+	Return ExecScript(lcScript)
+EndIf 
+
+
+ENDPROC
+PROCEDURE factory
+* Create and return object using abstract factory.
+Lparameters lcFactoryKey, tPar1, tPar2, tPar3, tPar4, tPar5
+Local lcParameterClause, lnPCount
+	
+lnPCount = Pcount() - 1
+If lnPCount > 0
+	lcParameterClause = This.CreateParameterClause(lnPCount)
+	Debugout Time(0), Program(), lcParameterClause 
+	Return Factory(lcFactoryKey, &lcParameterClause)
+Else
+	Debugout Time(0), Program()
+	Return Factory(lcFactoryKey)
+EndIf 
+ENDPROC
+PROCEDURE geterrormessage
+* Get last recorded error.  
+* Requires error handler in Fox app to set _Screen.cErrorMessage.
+Local lcErrorMessage
+
+lcErrorMessage = ""
+If Type("_Screen.cErrorMessage") = "C"
+	lcErrorMessage = _Screen.cErrorMessage
+	* Reset error message
+	_Screen.cErrorMessage = ""
+EndIf 
+
+Return lcErrorMessage
+
+ENDPROC
+PROCEDURE setprivatedatasession
+* Set up private data session for object
+This.oSession = CreateObject("Session")
+This.oSession.Name = This.Name
+Set Datasession To This.oSession.DataSessionID
+Set Deleted On
+Set Multilocks On
+Set TablePrompt Off
+DebugInfo("Using Session "+Alltrim(Str(Set("Datasession"))))
+
+
+ENDPROC
+[END METHODS]
+[START RESERVED1]
+Class[END RESERVED1]
+[START RESERVED2]
+1[END RESERVED2]
+[START RESERVED3]
+*call Execute/call function.
+*callmethod Instantiate object and execute/call class method.
+*createnewobject Create and return new object.
+*createparameterclause Create parameter clause with specified number of parameters.
+*do Execute program.
+*docmd Do command.
+*eval Evaluate expression.
+*execscript Execute script.
+*factory Create and return object using abstract factory.
+*geterrormessage Get last recorded error.  Requires error handler in Fox app to set _Screen.cErrorMessage.
+*setprivatedatasession Set up private data session for object.
+_memberdata XML Metadata for customizable properties
+lquitondestroy When set to .T., will Quit FoxPro when object is destroyed.
+osession Reference to private data session.
+[END RESERVED3]
+[START RESERVED6]
+Pixels[END RESERVED6]
+[START RESERVED8]
+..\..\vpme91\main.h[END RESERVED8]
+
+[ RECORD]
+[PLATFORM] COMMENT 
+[UNIQUEID] RESERVED  
+[OBJNAME] foxrun
+[EOF]

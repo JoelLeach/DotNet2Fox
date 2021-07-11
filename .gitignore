@@ -3,6 +3,8 @@
 
 # FoxPro files
 *.fxp
+*.bak
+*.vbr
 
 # User-specific files
 *.suo
