@@ -1,4 +1,4 @@
-DEFINE CLASS FoxNetTest AS Custom
+DEFINE CLASS FoxTest AS Custom
 
 PROCEDURE AddNumbers
 	* Test FoxPro class used for unit testing

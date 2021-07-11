@@ -64,7 +64,7 @@
   <ItemGroup>
     <None Include="FoxCode\addnumbers.PRG" />
     <None Include="FoxCode\errortest.PRG" />
-    <None Include="FoxCode\FoxNetTest.PRG" />
+    <None Include="FoxCode\FoxTest.PRG" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNet2Fox\DotNet2Fox.csproj">

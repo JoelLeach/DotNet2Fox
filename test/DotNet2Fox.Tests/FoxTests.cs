@@ -65,8 +65,8 @@ namespace DotNet2Fox.Tests
             using (Fox fox = new Fox("FoxTests", null, 60, true))
             {
                 fox.StartRequest("FoxTests");
-                var result = fox.Call("Lower", "FOXNETTEST");
-                Assert.AreEqual(result, "foxnettest");
+                var result = fox.Call("Lower", "FOXTEST");
+                Assert.AreEqual(result, "foxtest");
             }
         }
 
@@ -101,7 +101,7 @@ namespace DotNet2Fox.Tests
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
-                var result = fox.CallMethod("AddNumbers", "FoxNetTest", "FoxNetTest.prg", "", 2, 3);
+                var result = fox.CallMethod("AddNumbers", "FoxTest", "FoxTest.prg", "", 2, 3);
                 Assert.AreEqual(result, 5);
             }
         }
@@ -126,7 +126,7 @@ namespace DotNet2Fox.Tests
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
-                var foxTest = fox.CreateNewObject("FoxNetTest", "FoxNetTest.prg");
+                var foxTest = fox.CreateNewObject("FoxTest", "FoxTest.prg");
                 var result = foxTest.AddNumbers(2, 3);
                 Assert.AreEqual(result, 5);
             }
