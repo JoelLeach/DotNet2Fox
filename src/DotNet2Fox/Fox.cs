@@ -318,33 +318,6 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Instantiate FoxPro object using MBS Factory()
-        public dynamic Factory(string classKey, params object[] parameters)
-        {
-            dynamic result;
-            try {
-                result = foxRun.Factory(classKey, parameters);
-            }
-            catch (Exception ex)
-            {
-                // UPDATE: Decided automatically retrying commands is probably a bad idea, 
-                //  so setting retries to zero.
-                HandleError(ex, 0);
-                //HandleError(ex, 1);
-                // If COM failure, then retry one time per request
-                if (retryAfterError)
-                {
-                    CheckFoxRun(true);
-                    result = Factory(classKey, parameters);
-                }
-                else
-                {
-                    result = null;
-                }
-            }
-            return result;
-        }
-
         // Setup timer
         private void CreateTimer()
         {
