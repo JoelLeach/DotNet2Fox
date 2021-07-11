@@ -56,7 +56,7 @@ namespace DotNet2Fox.Tests
         public void PoolLowLoadFoxAppTest()
         {
             FoxPool.DebugMode = true;
-            FoxPool.SetFoxAppType<FoxNetTestApp>();
+            FoxPool.SetFoxAppType<FoxTestApp>();
             LoadTest(50);
             FoxPool.ResetFoxAppType();
         }
@@ -65,7 +65,7 @@ namespace DotNet2Fox.Tests
         public void PoolHeavyLoadFoxAppTest()
         {
             FoxPool.DebugMode = true;
-            FoxPool.SetFoxAppType<FoxNetTestApp>();
+            FoxPool.SetFoxAppType<FoxTestApp>();
             LoadTest(500);
             FoxPool.ResetFoxAppType();
         }
@@ -74,7 +74,7 @@ namespace DotNet2Fox.Tests
         public void PoolHeavyLoadFoxAppNoDebugTest()
         {
             FoxPool.DebugMode = false;
-            FoxPool.SetFoxAppType<FoxNetTestApp>();
+            FoxPool.SetFoxAppType<FoxTestApp>();
             LoadTest(500);
             FoxPool.ResetFoxAppType();
         }
@@ -112,7 +112,7 @@ namespace DotNet2Fox.Tests
         public void PoolTimeoutFoxAppTest()
         {
             FoxPool.DebugMode = true;
-            FoxPool.SetFoxAppType<FoxNetTestApp>();
+            FoxPool.SetFoxAppType<FoxTestApp>();
             TimeoutTest();
             FoxPool.ResetFoxAppType();
         }
@@ -121,7 +121,7 @@ namespace DotNet2Fox.Tests
         public void PoolTimeoutFoxAppNoDebugTest()
         {
             FoxPool.DebugMode = false;
-            FoxPool.SetFoxAppType<FoxNetTestApp>();
+            FoxPool.SetFoxAppType<FoxTestApp>();
             TimeoutTest();
             FoxPool.ResetFoxAppType();
         }

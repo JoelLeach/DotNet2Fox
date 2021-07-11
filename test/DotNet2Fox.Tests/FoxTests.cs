@@ -191,7 +191,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void FoxAppTest()
         {
-            using (Fox fox = new Fox("FoxTests", new FoxNetTestApp(), 60, true))
+            using (Fox fox = new Fox("FoxTests", new FoxTestApp(), 60, true))
             {
                 fox.StartRequest("FoxTests");
                 var result = fox.Eval("2 + 3");

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DotNet2Fox.Tests
 {
-    class FoxNetTestApp : IFoxApp
+    class FoxTestApp : IFoxApp
     {
         public void EndApp(Fox fox, string key, bool debugMode)
         {
