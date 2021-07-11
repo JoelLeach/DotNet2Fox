@@ -8,7 +8,7 @@ using Microsoft.CSharp.RuntimeBinder;
 
 namespace DotNet2Fox
 {
-    public class FoxNet : IDisposable
+    public class Fox : IDisposable
     {
 
         private dynamic foxCOM;
@@ -29,7 +29,7 @@ namespace DotNet2Fox
         private bool retryAfterError;
         public int ProcessId;
 
-        public FoxNet(string key, IFoxApp foxApp = null, int foxTimeout = 60, bool debugMode = false, bool usingPool = false)
+        public Fox(string key, IFoxApp foxApp = null, int foxTimeout = 60, bool debugMode = false, bool usingPool = false)
         {
             this.key = key;
             this.foxApp = foxApp;
@@ -37,7 +37,7 @@ namespace DotNet2Fox
             this.debugMode = debugMode;
             this.usingPool = usingPool;
             this.id = Guid.NewGuid().ToString();
-            Debug.WriteLine("FoxNet constructed: " + key + " " + id);
+            Debug.WriteLine("Fox constructed: " + key + " " + id);
             CreateTimer();
         }
 
@@ -409,7 +409,7 @@ namespace DotNet2Fox
         }
 
         // Make sure foxCOM object is ok
-        // Otherwise, errors will occur if Fox instance crashes or is closed and FoxNet thinks it is still open
+        // Otherwise, errors will occur if VFP instance crashes or is closed and Fox object thinks it is still open
         // Optionally reinstantiate if there is a problem
         private void CheckFoxCOM(bool reinstantiate = false)
         {
@@ -446,7 +446,7 @@ namespace DotNet2Fox
         private void InstantiateFoxRun()
         {
             // FoxRun is object used to run FoxPro/Nexus commands
-            // It is instantiated from within FoxRef and will be released as well.
+            // It is instantiated from within FoxCOM and will be released as well.
             try
             {
                 if (foxRun == null)
@@ -489,14 +489,13 @@ namespace DotNet2Fox
         }
 
         // Make sure foxCOM object is ok
-        // Otherwise, errors will occur if Fox instance crashes or is closed and FoxNet thinks it is still open
+        // Otherwise, errors will occur if VFP instance crashes or is closed and Fox object thinks it is still open
         // Optionally reinstantiate if there is a problem
         private void CheckFoxRun(bool reinstantiate = false) 
         {
             bool foxRunOK;
             try
             {
-                // Next statement will cause error if FoxPro instance is no longer alive
                 // Next statement will cause error if FoxPro instance is no longer alive
                 if (foxRun.Eval("1+1") == 2)
                 {
@@ -667,7 +666,7 @@ namespace DotNet2Fox
                     // Lock to make sure finished disposing before starting new request
                     lock (requestLock)
                     {
-                        // Put FoxNet object back in pool
+                        // Put Fox object back in pool
                         var added = FoxPool.AddObject(key, this);
                         if (added)
                         {
@@ -710,9 +709,9 @@ namespace DotNet2Fox
         #endregion
 
         // Finalizer in case Dispose not called by user
-        ~FoxNet()
+        ~Fox()
         {
-            Debug.WriteLine(key + ": FoxNet destructor " + id);
+            Debug.WriteLine(key + ": Fox destructor " + id);
             usingPool = false;
             Dispose(false);
         }

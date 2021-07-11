@@ -2,7 +2,7 @@
 Local loErr as Exception
 
 Try 
-	Error "FoxNet Test Error"
+	Error "Fox Test Error"
 Catch to loErr
 	_Screen.cErrorMessage = loErr.Message
 	If _VFP.StartMode = 2	&& COM EXE

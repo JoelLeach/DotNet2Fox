@@ -11,24 +11,24 @@ namespace DotNet2Fox.Tests
 {
     class FoxNetTestApp : IFoxApp
     {
-        public void EndApp(FoxNet foxNet, string key, bool debugMode)
+        public void EndApp(Fox fox, string key, bool debugMode)
         {
-            foxNet.DoCmd("? 'EndApp()'");
+            fox.DoCmd("? 'EndApp()'");
         }
 
-        public void EndRequest(FoxNet foxNet, string key, bool debugMode)
+        public void EndRequest(Fox fox, string key, bool debugMode)
         {
-            foxNet.DoCmd("? 'EndRequest()'");
+            fox.DoCmd("? 'EndRequest()'");
         }
 
-        public void StartApp(FoxNet foxNet, string key, bool debugMode)
+        public void StartApp(Fox fox, string key, bool debugMode)
         {
-            foxNet.DoCmd("? 'StartApp()'");
+            fox.DoCmd("? 'StartApp()'");
         }
 
-        public void StartRequest(FoxNet foxNet, string key, bool debugMode)
+        public void StartRequest(Fox fox, string key, bool debugMode)
         {
-            foxNet.DoCmd("? 'StartRequest()'");
+            fox.DoCmd("? 'StartRequest()'");
         }
     }
 }

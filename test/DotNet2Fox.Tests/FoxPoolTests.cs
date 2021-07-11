@@ -16,7 +16,7 @@ namespace DotNet2Fox.Tests
         public void PoolGetObjectTest()
         {
             FoxPool.DebugMode = true;
-            using (FoxNet fox = FoxPool.GetObject("FoxNetTests"))
+            using (Fox fox = FoxPool.GetObject("FoxNetTests"))
             {
                 var result = fox.Eval("1+1");
                 Assert.AreEqual(result, 2);
@@ -28,7 +28,7 @@ namespace DotNet2Fox.Tests
         {
             Parallel.For(1, iterations, (i, loopState) =>
             {
-                using (FoxNet fox = FoxPool.GetObject("FoxNetTests"))
+                using (Fox fox = FoxPool.GetObject("FoxNetTests"))
                 {
                     fox.DoCmd("? 'Load Test', " + i.ToString());
                     var result = fox.Eval("1+1");
@@ -86,7 +86,7 @@ namespace DotNet2Fox.Tests
             var newThreadID = 0;
             for (int i = 0; i < 5; i++)
             {
-                using (FoxNet fox = FoxPool.GetObject("FoxNetTests"))
+                using (Fox fox = FoxPool.GetObject("FoxNetTests"))
                 {
                     fox.DoCmd("? 'Timeout Test', " + i.ToString() + ", 'Thread', _VFP.ThreadID");
                     // Make sure Fox instance times out and starts a new instance for every request

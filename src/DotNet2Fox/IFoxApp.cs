@@ -1,4 +1,4 @@
-﻿// FoxNet interface for application-specific code
+﻿// Fox interface for application-specific code
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,15 +11,15 @@ namespace DotNet2Fox
     public interface IFoxApp
     {
         // Called when Fox application starts up
-        void StartApp(FoxNet foxNet, string key, bool debugMode);
+        void StartApp(Fox fox, string key, bool debugMode);
 
         // Called before each request
-        void StartRequest(FoxNet foxNet, string key, bool debugMode);
+        void StartRequest(Fox fox, string key, bool debugMode);
 
-        // Called after request when FoxNet is disposed
-        void EndRequest(FoxNet foxNet, string key, bool debugMode);
+        // Called after request when Fox object is disposed
+        void EndRequest(Fox fox, string key, bool debugMode);
 
         // Called when Fox app is shutting down
-        void EndApp(FoxNet foxNet, string key, bool debugMode);
+        void EndApp(Fox fox, string key, bool debugMode);
     }
 }

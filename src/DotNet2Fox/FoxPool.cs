@@ -1,4 +1,4 @@
-﻿// Pool for FoxNet objects
+﻿// Pool for Fox objects
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,7 @@ namespace DotNet2Fox
 {
     public class FoxPool
     {
-        private static ConcurrentDictionary<string, FoxNet> pool;
+        private static ConcurrentDictionary<string, Fox> pool;
         private static volatile bool poolEnabled = true;
         public static volatile int instCount = 0;
         public static volatile int poolCount = 0;
@@ -26,7 +26,7 @@ namespace DotNet2Fox
 
         static FoxPool()
         {
-            pool = new ConcurrentDictionary<string, FoxNet>();
+            pool = new ConcurrentDictionary<string, Fox>();
             // Set defaults
             PoolSize = Environment.ProcessorCount;
             DebugMode = false;
@@ -52,10 +52,10 @@ namespace DotNet2Fox
             ClearPool();
         }
 
-        // Get FoxNet object from pool
-        public static FoxNet GetObject(string key)
+        // Get Fox object from pool
+        public static Fox GetObject(string key)
         {
-            FoxNet foxNet = null;
+            Fox fox = null;
 
             while (true)
             {
@@ -63,26 +63,26 @@ namespace DotNet2Fox
                 if (poolEnabled && pool.Count > 0)
                 {
                     // Prefer objects that start with key
-                    foxNet = GetObjectFromPool(key);
+                    fox = GetObjectFromPool(key);
 
                     // If none found, optionally recycle one of the other objects in the pool with a different key
                     // Recycling can reduce loading times, but it can also cause problems if the Fox app is not prepared 
                     // to handle a different key.
-                    if (foxNet == null && RecycleOtherKeys)
+                    if (fox == null && RecycleOtherKeys)
                     {
-                        foxNet = GetObjectFromPool();
+                        fox = GetObjectFromPool();
                     }
                 }
 
                 // If no objects are available, create a new one
-                if (foxNet == null)
+                if (fox == null)
                 {
                     if (instCount < PoolSize)
                     {
                         instCount++;
                         Debug.WriteLine("GetObject() not found: " + key);
                         IFoxApp foxApp = CreateFoxAppObject();
-                        foxNet = new FoxNet(key, foxApp, FoxTimeout, DebugMode, true);
+                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
                         break;
                     }
                     else
@@ -98,14 +98,14 @@ namespace DotNet2Fox
                 }
             }
 
-            foxNet.StartRequest(key);
-            return foxNet;
+            fox.StartRequest(key);
+            return fox;
         }
 
         // Get object from pool with or without key
-        private static FoxNet GetObjectFromPool(string key = null)
+        private static Fox GetObjectFromPool(string key = null)
         {
-            FoxNet item = null;
+            Fox item = null;
             string findKey = null;
             if (key != null)
             {
@@ -127,7 +127,7 @@ namespace DotNet2Fox
         }
 
         // Add object to pool for reuse later
-        public static bool AddObject(string key, FoxNet item)
+        public static bool AddObject(string key, Fox item)
         {
             var added = false;
             
@@ -158,7 +158,7 @@ namespace DotNet2Fox
                 poolEnabled = false;
 
                 // Clear pool and dispose objects
-                FoxNet item;
+                Fox item;
                 foreach (var key in pool.Keys)
                 {
                     if (pool.TryRemove(key, out item))
@@ -201,7 +201,7 @@ namespace DotNet2Fox
             FoxAppType = null;
         }
 
-        // Create FoxApp object when FoxNet is added to pool
+        // Create FoxApp object when Fox object is added to pool
         private static IFoxApp CreateFoxAppObject()
         {
             IFoxApp foxApp = null;
