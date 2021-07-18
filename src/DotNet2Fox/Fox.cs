@@ -2,6 +2,7 @@
 // .NET interface to generic FoxPro COM object
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Timers;
 using Microsoft.CSharp.RuntimeBinder;
@@ -353,7 +354,9 @@ namespace DotNet2Fox
                     {
                         dynamic vfp = Activator.CreateInstance(Type.GetTypeFromProgID("VisualFoxPro.Application", true));
                         vfp.Visible = true;
-                        foxCOM = vfp.Eval(@"NewObject('Application', 'C:\Apps.NET\FoxCOM\FoxCOM.prg')");
+                        string foxCOMPath = Path.GetFullPath(@"FoxCOM\FoxCOM.prg");
+                        string cmd = $"NewObject('Application', '{foxCOMPath}')";
+                        foxCOM = vfp.Eval(cmd);
                         foxCOM.lQuitOnDestroy = true;
                         Marshal.ReleaseComObject(vfp);
                     }
@@ -431,8 +434,7 @@ namespace DotNet2Fox
                     {
                         // In debug mode, _VFP is the same as foxCOM
                         _VFP = foxCOM.VFP;
-                        foxRunVCX = @"C:\Apps.NET\FoxCOM\foxrun.vcx";
-                        //foxRunVCX = @"C:\Apps.NET\FoxCOM\foxrun.prg";
+                        foxRunVCX = Path.GetFullPath(@"FoxCOM\FoxRun.vcx");
                     }
                     else
                     {
@@ -440,7 +442,8 @@ namespace DotNet2Fox
                         _VFP = foxCOM.VFP;
                     }
 
-                    foxRun = _VFP.Eval("NewObject('foxrun','" + foxRunVCX + "')");
+                    string cmd = "NewObject('foxrun','" + foxRunVCX + "')";
+                    foxRun = _VFP.Eval(cmd);
                     foxRun.lQuitOnDestroy = false;
                 }
             }

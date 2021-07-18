@@ -50,6 +50,20 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestCallback.cs" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <None Include="..\FoxCOM\foxcom.prg">
+      <Link>FoxCOM\foxcom.prg</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\FoxCOM\foxrun.vct">
+      <Link>FoxCOM\foxrun.vct</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\FoxCOM\foxrun.vcx">
+      <Link>FoxCOM\foxrun.vcx</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
