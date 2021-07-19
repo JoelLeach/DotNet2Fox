@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Timers;
 using Microsoft.CSharp.RuntimeBinder;
@@ -354,7 +355,7 @@ namespace DotNet2Fox
                     {
                         dynamic vfp = Activator.CreateInstance(Type.GetTypeFromProgID("VisualFoxPro.Application", true));
                         vfp.Visible = true;
-                        string foxCOMPath = Path.GetFullPath(@"FoxCOM\FoxCOM.prg");
+                        string foxCOMPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM\FoxCOM.prg";
                         string cmd = $"NewObject('Application', '{foxCOMPath}')";
                         foxCOM = vfp.Eval(cmd);
                         foxCOM.lQuitOnDestroy = true;
@@ -434,7 +435,7 @@ namespace DotNet2Fox
                     {
                         // In debug mode, _VFP is the same as foxCOM
                         _VFP = foxCOM.VFP;
-                        foxRunVCX = Path.GetFullPath(@"FoxCOM\FoxRun.vcx");
+                        foxRunVCX = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM\FoxRun.vcx";
                     }
                     else
                     {
