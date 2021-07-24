@@ -16,6 +16,7 @@ namespace DotNet2Fox
         private static volatile bool poolEnabled = true;
         public static volatile int instCount = 0;
         public static volatile int poolCount = 0;
+        public static object cleanupComLock = new object();
 
         public static int PoolSize { get; set; }
         public static bool DebugMode { get; set; }

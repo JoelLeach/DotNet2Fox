@@ -24,7 +24,7 @@ namespace DotNet2Fox
         private bool debugMode;
         private bool usingPool;
         public string id { get; set; } // unique object id
-        private Object requestLock = new Object();
+        private object requestLock = new Object();
         private bool releasingFoxCOM;
         private bool requestRunning;
         private TestCallback callback;
@@ -643,16 +643,19 @@ namespace DotNet2Fox
                         foxRun = null;
                     }
 
-                    Debug.WriteLine("GC Cleanup: " + id);
-                    // Release any COM objects created by FoxRun (CreateNewObject(), etc.)
-                    // See https://stackoverflow.com/questions/37904483/as-of-today-what-is-the-right-way-to-work-with-com-objects
-                    do
+                    if (usingPool)
                     {
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
+                        // If using pool, only allow one thread to cleanup at a time
+                        // Marshal.AreComObjectsAvailableForCleanup() can hang if several threads call it at the same time
+                        lock (FoxPool.cleanupComLock)
+                        {
+                            CleanupComObjects();
+                        }
                     }
-                    while (Marshal.AreComObjectsAvailableForCleanup());
-                    Debug.WriteLine("GC Cleanup Complete: " + id);
+                    else
+                    {
+                        CleanupComObjects();
+                    }
                 }
                 catch
                 {
@@ -663,6 +666,20 @@ namespace DotNet2Fox
             }
         }
 
+        private void CleanupComObjects()
+        {
+            Debug.WriteLine("GC Cleanup: " + id);
+            // Release any COM objects created by FoxRun (CreateNewObject(), etc.)
+            // See https://stackoverflow.com/questions/37904483/as-of-today-what-is-the-right-way-to-work-with-com-objects
+            do
+            {
+                //Debug.WriteLine("GC Cleanup Loop: " + id);
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+            while (Marshal.AreComObjectsAvailableForCleanup());
+            Debug.WriteLine("GC Cleanup Complete: " + id);
+        }
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls

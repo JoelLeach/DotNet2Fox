@@ -13,8 +13,6 @@ namespace DotNet2Fox.Tests
         // Location of FoxPro code to execute
         string foxCodePath = Directory.GetParent(Directory.GetParent(Directory.GetCurrentDirectory()).ToString()).ToString() + "/FoxCode";
 
-        private TaskCompletionSource<string> tcs;
-
         [TestMethod()]
         public void DoCmdTest()
         {

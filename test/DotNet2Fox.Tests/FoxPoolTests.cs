@@ -1,11 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DotNet2Fox;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Diagnostics;
 
 namespace DotNet2Fox.Tests
 {
@@ -26,15 +22,19 @@ namespace DotNet2Fox.Tests
 
         private void LoadTest(int iterations)
         {
+            Debug.WriteLine("==== Begin LoadTest: " + iterations.ToString() + " ===");
+            FoxPool.ClearPool();
             Parallel.For(1, iterations, (i, loopState) =>
             {
                 using (Fox fox = FoxPool.GetObject("FoxTests"))
                 {
-                    fox.DoCmd("? 'Load Test', " + i.ToString());
+                    //fox.DoCmd("? 'Load Test', " + i.ToString());
+                    //fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
                     var result = fox.Eval("1+1");
                     Assert.AreEqual(result, 2);
                 }
             });
+            Debug.WriteLine("==== End LoadTest: " + iterations.ToString() + " ===");
             FoxPool.ClearPool();
         }
 
@@ -49,6 +49,13 @@ namespace DotNet2Fox.Tests
         public void PoolHeavyLoadTest()
         {
             FoxPool.DebugMode = true;
+            LoadTest(1000);
+        }
+
+        [TestMethod()]
+        public void PoolHeavyLoadNoDebugTest()
+        {
+            FoxPool.DebugMode = false;
             LoadTest(1000);
         }
 
@@ -124,6 +131,41 @@ namespace DotNet2Fox.Tests
             FoxPool.SetFoxAppType<FoxTestApp>();
             TimeoutTest();
             FoxPool.ResetFoxAppType();
+        }
+
+        [TestMethod()]
+        public void PoolReleaseFormTest()
+        {
+            FoxPool.DebugMode = false;
+            for (int i = 0; i < 5; i++)
+            {
+                using (Fox fox = FoxPool.GetObject("FoxTests"))
+                {
+                    Thread.Sleep(500);
+                    var form = fox.CreateNewObject("Form", "");
+                    // Adjust form in separate method to prevent dangling references 
+                    //  to objects contained in form. Otherwise, form won't release.
+                    AdjustForm(form, i);
+                    form.Release();
+                    form = null;
+                    Thread.Sleep(100);
+                }
+                // Each form should be released here, before the next form appears
+            }
+            Thread.Sleep(1000);
+            FoxPool.ClearPool();
+        }
+
+        private void AdjustForm(dynamic form, int i)
+        {
+            form.Caption = "Form Test " + i.ToString();
+            form.Left = i * 50;
+            form.Top = i * 50;
+            form.Show();
+            form.AddObject("txtTest", "TextBox");
+            var txtTest = form.txtTest;
+            txtTest.Visible = true;
+            txtTest.Value = "Test";
         }
 
     }
