@@ -1,11 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DotNet2Fox;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Diagnostics;
 
 namespace DotNet2Fox.Tests
 {
@@ -15,6 +12,8 @@ namespace DotNet2Fox.Tests
 
         // Location of FoxPro code to execute
         string foxCodePath = Directory.GetParent(Directory.GetParent(Directory.GetCurrentDirectory()).ToString()).ToString() + "/FoxCode";
+
+        private TaskCompletionSource<string> tcs;
 
         [TestMethod()]
         public void DoCmdTest()
@@ -38,6 +37,17 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task EvalAsyncTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                var result = await fox.EvalAsync("1+1");
+                Assert.AreEqual(result, 2);
+            }
+        }
+
+        [TestMethod()]
         public void EvalNoDebugTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, false))
@@ -56,6 +66,17 @@ namespace DotNet2Fox.Tests
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 fox.Do("AddNumbers", "", 2, 3);
+            }
+        }
+
+        [TestMethod()]
+        public async Task DoPRGAsyncTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                await fox.DoAsync("AddNumbers", "", 2, 3);
             }
         }
 
@@ -171,15 +192,53 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task ErrorAsyncTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                try
+                {
+                    await fox.DoAsync("ErrorTest");
+                }
+                catch (Exception e)
+                {
+                    Assert.AreEqual(e.Message, "Fox Test Error");
+                }
+            }
+        }
+
+        [TestMethod()]
         public void ErrorNoDebugTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, false))
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                fox.DoCmd("Compile ErrorTest.prg");
                 try
                 {
                     fox.Do("ErrorTest");
+                }
+                catch (Exception e)
+                {
+                    Assert.AreEqual(e.Message, "Fox Test Error");
+                }
+            }
+        }
+
+        [TestMethod()]
+        public async Task ErrorNoDebugAsyncTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, false))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                fox.DoCmd("Compile ErrorTest.prg");
+                try
+                {
+                    await fox.DoAsync("ErrorTest");
                 }
                 catch (Exception e)
                 {
@@ -196,6 +255,46 @@ namespace DotNet2Fox.Tests
                 fox.StartRequest("FoxTests");
                 var result = fox.Eval("2 + 3");
                 Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
+        public void PerformanceTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, false))
+            {
+                fox.StartRequest("FoxTests");
+                int iterations = 100;
+                var stopwatch = Stopwatch.StartNew();
+                for (int i = 0; i < iterations; i++)
+                {
+                    fox.Eval("2 + 3");
+                }
+                stopwatch.Stop();
+                var ms = stopwatch.ElapsedMilliseconds;
+                decimal msPerCall = decimal.Divide(ms, iterations);
+                Console.WriteLine($"Total time excluding startup: {ms} ms");
+                Console.WriteLine($"Time per call: {msPerCall} ms");
+            }
+        }
+
+        [TestMethod()]
+        public async Task PerformanceAsyncTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, false))
+            {
+                fox.StartRequest("FoxTests");
+                int iterations = 100;
+                var stopwatch = Stopwatch.StartNew();
+                for (int i = 0; i < iterations; i++)
+                {
+                    await fox.EvalAsync("2 + 3");
+                }
+                stopwatch.Stop();
+                var ms = stopwatch.ElapsedMilliseconds;
+                decimal msPerCall = Decimal.Divide(ms, iterations);
+                Console.WriteLine($"Total time excluding startup: {ms} ms");
+                Console.WriteLine($"Time per call: {msPerCall} ms");
             }
         }
 
