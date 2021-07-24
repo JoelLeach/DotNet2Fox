@@ -33,7 +33,7 @@ _AutoIncrement = "0"
 
 
 *<ServerHead>
-_LibraryName = 'C:\Apps.NET\FoxCOM\foxcom.exe'
+_LibraryName = 'D:\AppsWeb\nexus-aspnet-core\DotNet2Fox\src\FoxCOM\foxcom.exe'
 _InternalName = 'foxcom'
 _ProjectName = 'FoxCOM'
 _TypeLibDesc = 'FoxCOMType Library'
@@ -46,7 +46,7 @@ _ServerName = 'FoxCOM.Application'
 _Description = 'FoxCOM.Application'
 _HelpFile = ''
 _ServerClass = 'Application'
-_ClassLibrary = 'c:\apps.net\foxcom\foxcom.prg'
+_ClassLibrary = 'd:\appsweb\nexus-aspnet-core\dotnet2fox\src\foxcom\foxcom.prg'
 _Instancing = '1'
 _CLSID = '{56458AED-AFB5-4F73-B399-70ABAB55DD57}'
 _Interface = '{51029A02-D7B3-428E-B4FF-DBAA60329647}'

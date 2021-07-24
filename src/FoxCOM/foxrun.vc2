@@ -5,30 +5,71 @@
 *< FOXBIN2PRG: Version="1.19" SourceFile="foxrun.vcx" /> (Solo para binarios VFP 9 / Only for VFP 9 binaries)
 *
 *
+DEFINE CLASS asynccommand AS custom 
+ 	*< CLASSDATA: Baseclass="custom" Timestamp="" Scale="Pixels" Uniqueid="" />
+
+	*<DefinedPropArrayMethod>
+		*p: cclass		&& Class containing command (if applicable).
+		*p: ccommand		&& Command.
+		*p: ccommandtype		&& Command type.
+		*p: cinapplication		&& Application containing class library.
+		*p: cmodule		&& Module/Class Library containing command (if applicable).
+		*a: aparameters[1,1]		&& Parameter array.
+		*p: _memberdata		&& XML Metadata for customizable properties
+	*</DefinedPropArrayMethod>
+
+	cclass = 		&& Class containing command (if applicable).
+	ccommand = 		&& Command.
+	ccommandtype = 		&& Command type.
+	cinapplication = 		&& Application containing class library.
+	cmodule = 		&& Module/Class Library containing command (if applicable).
+	Name = "asynccommand"
+	_memberdata = <VFPData>
+		<memberdata name="ccommandtype" display="cCommandType"/>
+		<memberdata name="ccommand" display="cCommand"/>
+		<memberdata name="cclass" display="cClass"/>
+		<memberdata name="cmodule" display="cModule"/>
+		<memberdata name="cinapplication" display="cInApplication"/>
+		<memberdata name="aparameters" display="aParameters"/>
+		</VFPData>		&& XML Metadata for customizable properties
+
+ENDDEFINE
+
 DEFINE CLASS foxrun AS custom 
  	*< CLASSDATA: Baseclass="custom" Timestamp="" Scale="Pixels" Uniqueid="" />
 
-	#INCLUDE "..\..\vpme91\main.h"
 	*<DefinedPropArrayMethod>
 		*m: call		&& Execute/call function.
 		*m: callmethod		&& Instantiate object and execute/call class method.
 		*m: createnewobject		&& Create and return new object.
 		*m: createparameterclause		&& Create parameter clause with specified number of parameters.
 		*m: do		&& Execute program.
+		*m: doasync		&& Execute program (async).
 		*m: docmd		&& Do command.
 		*m: eval		&& Evaluate expression.
+		*m: evalasync		&& Evaluate expression (async).
 		*m: execscript		&& Execute script.
 		*m: factory		&& Create and return object using abstract factory.
 		*m: geterrormessage		&& Get last recorded error.  Requires error handler in Fox app to set _Screen.cErrorMessage.
+		*m: processasynccommand		&& Process async command.
+		*m: setasynccommand		&& Setup async command and timer to execute it.
+		*m: setasyncexception		&& Set exception in .NET Task Completion Source.
 		*m: setprivatedatasession		&& Set up private data session for object.
 		*p: lquitondestroy		&& When set to .T., will Quit FoxPro when object is destroyed.
+		*p: oasynccommand		&& Async command to execute.
+		*p: oasynctimer		&& Timer used to execute async command.
 		*p: osession		&& Reference to private data session.
+		*p: otaskcompletionsource		&& .NET Task Completion Source object for async commands.
 		*p: _memberdata		&& XML Metadata for customizable properties
 	*</DefinedPropArrayMethod>
 
+	PROTECTED oasynccommand,oasynctimer,otaskcompletionsource
 	lquitondestroy = .F.		&& When set to .T., will Quit FoxPro when object is destroyed.
 	Name = "foxrun"
+	oasynccommand = 		&& Async command to execute.
+	oasynctimer = 		&& Timer used to execute async command.
 	osession = .F.		&& Reference to private data session.
+	otaskcompletionsource = .NULL.		&& .NET Task Completion Source object for async commands.
 	_memberdata = <VFPData>
 		<memberdata name="createparameterclause" display="CreateParameterClause"/>
 		<memberdata name="call" display="Call"/>
@@ -43,6 +84,14 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="geterrormessage" display="GetErrorMessage"/>
 		<memberdata name="osession" display="oSession"/>
 		<memberdata name="setprivatedatasession" display="SetPrivateDataSession"/>
+		<memberdata name="setasynccommand" display="SetAsyncCommand"/>
+		<memberdata name="oasynccommand" display="oAsyncCommand"/>
+		<memberdata name="oasynctimer" display="oAsyncTimer"/>
+		<memberdata name="processasynccommand" display="ProcessAsyncCommand"/>
+		<memberdata name="evalasync" display="EvalAsync"/>
+		<memberdata name="otaskcompletionsource" display="oTaskCompletionSource"/>
+		<memberdata name="doasync" display="DoAsync"/>
+		<memberdata name="setasyncexception" display="SetAsyncException"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -127,7 +176,7 @@ DEFINE CLASS foxrun AS custom
 		* Optionally quit when object destroyed
 		Debugout Time(0), Program()
 		
-		? Time(0), Program()
+		* ? Time(0), Program()
 		* Clean up and release data session
 		*JAL*	Set Datasession To This.oSession.DataSessionID
 		*JAL*	Close Databases All
@@ -152,7 +201,6 @@ DEFINE CLASS foxrun AS custom
 			* DO passes all parameters by reference, so strip out "@" to avoid syntax error
 		*JAL*		lcParameterClause = Chrtran(lcParameterClause, "@", "")
 			Debugout Time(0), Program(), lcPRG, lcInProgram, lcParameterClause 	
-		? Time(0), Program(), lcPRG, lcInProgram, lcParameterClause 		
 			Do (lcPRG) in (lcInProgram) with &lcParameterClause
 		Else 
 			Debugout Time(0), Program(), lcPRG, lcInProgram
@@ -160,6 +208,17 @@ DEFINE CLASS foxrun AS custom
 		EndIf 
 		
 		* No return value from DO command, so always .T.
+	ENDPROC
+
+	PROCEDURE doasync		&& Execute program (async).
+		* Execute program (async)
+		Lparameters loTaskCompletionSource, lcPRG, lcInProgram, laParameters
+		
+		Debugout Time(0), Program(), lcPRG, lcInProgram
+		
+		This.SetAsyncCommand("DO", loTaskCompletionSource, lcPRG, lcInProgram,,, @laParameters)
+		
+		
 	ENDPROC
 
 	PROCEDURE docmd		&& Do command.
@@ -181,6 +240,15 @@ DEFINE CLASS foxrun AS custom
 		
 		Return Evaluate(lcExpression)
 		* Return _VFP.Eval(lcExpression)
+	ENDPROC
+
+	PROCEDURE evalasync		&& Evaluate expression (async).
+		* Evaluate expression (async)
+		Lparameters loTaskCompletionSource, lcExpression
+		
+		Debugout Time(0), Program(), lcExpression
+		
+		This.SetAsyncCommand("EVAL", loTaskCompletionSource, lcExpression)
 	ENDPROC
 
 	PROCEDURE execscript		&& Execute script.
@@ -243,6 +311,99 @@ DEFINE CLASS foxrun AS custom
 		Return DoDefault()
 	ENDPROC
 
+	PROCEDURE processasynccommand		&& Process async command.
+		* Process Async Command
+		* Called by tmrAsync
+		Local loAsyncCommand as ASyncCommand of FoxRun.vcx, lcCommandType, lvReturn, laParameters, loTaskCompletionSource
+		loAsyncCommand = This.oAsyncCommand	&& for Intellisense
+		
+		Assert !IsNull(loAsyncCommand) Message Program() + " Command object is NULL"
+		
+		Debugout Time(0), Program(), loAsyncCommand.cCommandType, loAsyncCommand.cCommand, ;
+			loAsyncCommand.cClass, loAsyncCommand.cModule
+			
+		* If error occurs, set exception in Task Completion Source	
+		* Called via BindEvent() if error message is set
+		BindEvent(_Screen, "cErrorMessage", This, "SetAsyncException", 1)
+		
+		lcCommandType = Upper(Alltrim(loAsyncCommand.cCommandType))
+		If Type("loAsyncCommand.aParameters", 1) = "A" and !(Vartype(loAsyncCommand.aParameters[1]) = "L" and loAsyncCommand.aParameters[1] = .F.)
+			Dimension laParameters[1]	&& change to array
+			Acopy(loAsyncCommand.aParameters, laParameters)
+		EndIf 
+		
+		Do Case
+		Case lcCommandType == "EVAL"
+			lvReturn = This.Eval(loAsyncCommand.cCommand)
+		Case lcCommandType == "DOCMD"
+			lvReturn = This.DoCmd(loAsyncCommand.cCommand)
+		Case lcCommandType == "DO"
+			lvReturn = This.Do(loAsyncCommand.cCommand, loAsyncCommand.cClass, @laParameters)
+		Case lcCommandType == "CALL"
+			lvReturn = This.Call(loAsyncCommand.cCommand, @laParameters)
+		Case lcCommandType == "CALLMETHOD"
+			lvReturn = This.CallMethod(loAsyncCommand.cCommand, loAsyncCommand.cClass, loAsyncCommand.cModule, loAsyncCommand.cInApplication, @laParameters)
+		Case lcCommandType == "EXECSCRIPT"
+			lvReturn = This.ExecScript(loAsyncCommand.cCommand, @laParameters)
+		Otherwise
+		
+		EndCase
+		
+		UnBindEvents(_Screen, "cErrorMessage", This, "SetAsyncException")
+		
+		* Set result in Task Completion Source
+		* This triggers .NET that the command is complete
+		* Release property references before setting result, or they could affect next call
+		loTaskCompletionSource = This.oTaskCompletionSource
+		This.oTaskCompletionSource = NULL
+		This.oAsyncCommand = NULL
+		loTaskCompletionSource.SetResult(lvReturn)
+		
+	ENDPROC
+
+	PROTECTED PROCEDURE setasynccommand		&& Setup async command and timer to execute it.
+		* Setup async command and timer to execute it
+		Lparameters lcCommandType, loTaskCompletionSource, lcCommand, lcClass, lcModule, lcInApplication, laParameters
+		Local loAsyncCommand as ASyncCommand of FoxRun.vcx
+		
+		Debugout Time(0), Program(), lcCommandType, lcCommand, lcClass, lcModule
+		
+		This.oTaskCompletionSource = loTaskCompletionSource
+		
+		* Create command object
+		loAsyncCommand = NewObject("AsyncCommand", This.ClassLibrary)
+		loAsyncCommand.cCommandType = Evl(lcCommandType, "")
+		loAsyncCommand.cCommand = Evl(lcCommand, "")
+		loAsyncCommand.cClass = Evl(lcClass, "")
+		loAsyncCommand.cModule = Evl(lcModule, "")
+		loAsyncCommand.cInApplication = Evl(lcInApplication, "")
+		If Type("laParameters", 1) = "A"
+			Acopy(laParameters, loAsyncCommand.aParameters)
+		EndIf 
+		
+		This.oAsyncCommand = loAsyncCommand 
+		
+		If Vartype(This.oAsyncTimer) <> "O" or IsNull(This.oAsyncTimer)
+			This.oAsyncTimer = NewObject("tmrAsync", This.ClassLibrary)
+		EndIf 
+		
+		* Timer is used to start command without blocking main process
+		This.oAsyncTimer.ProcessCommand(This)
+		
+	ENDPROC
+
+	PROCEDURE setasyncexception		&& Set exception in .NET Task Completion Source.
+		If !Empty(_Screen.cErrorMessage)
+			* Set exception in Task Completion Source
+			* This triggers .NET that the command is complete
+			* Release property references before setting result, or they could affect next call
+			loTaskCompletionSource = This.oTaskCompletionSource
+			This.oTaskCompletionSource = NULL
+			This.oAsyncCommand = NULL
+			loTaskCompletionSource.SetException()
+		EndIf 
+	ENDPROC
+
 	PROTECTED PROCEDURE setprivatedatasession		&& Set up private data session for object.
 		* Set up private data session for object
 		This.oSession = CreateObject("Session")
@@ -254,6 +415,64 @@ DEFINE CLASS foxrun AS custom
 		* DebugInfo("Using Session "+Alltrim(Str(Set("Datasession"))))
 		Debugout Time(0), Program(), Alltrim(Str(Set("Datasession")))
 		
+		
+	ENDPROC
+
+ENDDEFINE
+
+DEFINE CLASS tmrasync AS timer 
+ 	*< CLASSDATA: Baseclass="timer" Timestamp="" Scale="Pixels" Uniqueid="" />
+
+	*<DefinedPropArrayMethod>
+		*m: processcommand		&& Process current command.
+		*p: lprocessed		&& Is .T. if command already processed.
+		*p: ofoxrun		&& FoxRun class that processes command.
+		*p: _memberdata		&& XML Metadata for customizable properties
+	*</DefinedPropArrayMethod>
+
+	Enabled = .F.
+	Height = 23
+	Interval = 1
+	lprocessed = 		&& Is .T. if command already processed.
+	Name = "tmrasync"
+	ofoxrun = .NULL.		&& FoxRun class that processes command.
+	Width = 23
+	_memberdata = <VFPData>
+		<memberdata name="processcommand" display="ProcessCommand"/>
+		<memberdata name="lprocessed" display="lProcessed"/>
+		<memberdata name="ofoxrun" display="oFoxRun"/>
+		</VFPData>		&& XML Metadata for customizable properties
+	
+	PROCEDURE processcommand		&& Process current command.
+		* Process current command
+		Lparameters loFoxRun as FoxRun of FoxRun.vcx
+		
+		This.oFoxRun = loFoxRun
+		This.lProcessed = .f.
+		This.Enabled = .t.
+		
+	ENDPROC
+
+	PROCEDURE Timer
+		* Worker Command timer
+		* Timer is used to process command so main thread does not
+		*	wait on command to complete.
+		* Timer is enabled for each command and only fires once.
+		Local loFoxRun as FoxRun of FoxRun.vcx
+		
+		This.Enabled = .f.
+		Doevents 
+		* Timer can fire more than once before it is disabled.
+		* Doevents usually prevents this from happening, but this code ensures it.
+		If This.lProcessed
+			Return 
+		EndIf 
+		This.lProcessed = .t.
+		
+		* Hold reference to manager for minimum time to help avoid dangling objects
+		loFoxRun = This.oFoxRun
+		This.oFoxRun = NULL
+		loFoxRun.ProcessAsyncCommand() 
 		
 	ENDPROC
 
