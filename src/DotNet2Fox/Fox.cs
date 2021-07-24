@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Timers;
 using Microsoft.CSharp.RuntimeBinder;
 
@@ -185,6 +186,24 @@ namespace DotNet2Fox
             return result;
         }
 
+        // FoxPro Evaluate() function (async)
+        public async Task<dynamic> EvalAsync(string expression)
+        {
+            dynamic result;
+            var tcs = new TaskCompletionSourceWrapper();
+            try
+            {
+               foxRun.EvalAsync(tcs, expression);
+               result = await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+                result = null;
+            }
+            return result;
+        }
+
         // Execute/call function
         public dynamic Call(string functionName, params object[] parameters)
         {
@@ -293,6 +312,23 @@ namespace DotNet2Fox
 
         }
 
+        // Do program. The DO command does not have a return value.  Use Call() instead if a return value is required.
+        public async Task DoAsync(string program, string inProgram = "", params object[] parameters)
+        {
+            var tcs = new TaskCompletionSourceWrapper();
+            try
+            {
+                foxRun.DoAsync(tcs, program, inProgram, parameters);
+                // Await (rather than returning Task) allows exception handling here
+                await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+            }
+
+        }
+
         // Execute FoxPro script
         public dynamic ExecScript(string script, params object[] parameters)
         {
@@ -364,6 +400,10 @@ namespace DotNet2Fox
                     else
                     {
                         foxCOM = Activator.CreateInstance(Type.GetTypeFromProgID("FoxCOM.Application", true));
+                        // lQuitOnDestroy was previously only required in debug mode
+                        // Errors during async calls could cause "Cannot Quit Visual FoxPro" issue
+                        // Setting lQuitOnDestroy prevents that from happening, and doesn't cause other issues
+                        foxCOM.lQuitOnDestroy = true;
                         foxCOM.VFP.Visible = true;  // only visible in development or for IIS user
                     }
                     ProcessId = foxCOM.VFP.ProcessId;
@@ -603,6 +643,7 @@ namespace DotNet2Fox
                         foxRun = null;
                     }
 
+                    Debug.WriteLine("GC Cleanup: " + id);
                     // Release any COM objects created by FoxRun (CreateNewObject(), etc.)
                     // See https://stackoverflow.com/questions/37904483/as-of-today-what-is-the-right-way-to-work-with-com-objects
                     do
@@ -611,11 +652,14 @@ namespace DotNet2Fox
                         GC.WaitForPendingFinalizers();
                     }
                     while (Marshal.AreComObjectsAvailableForCleanup());
+                    Debug.WriteLine("GC Cleanup Complete: " + id);
                 }
                 catch
                 {
                     // Ignore errors when releasing
+                    Debug.WriteLine("Marshal.ReleaseComObject(foxRun) Error: " + id);
                 }
+                Debug.WriteLine("ReleaseFoxRun() Complete: " + id);
             }
         }
 
