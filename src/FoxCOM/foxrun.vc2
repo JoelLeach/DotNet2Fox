@@ -43,6 +43,8 @@ DEFINE CLASS foxrun AS custom
 		*m: callasync		&& Execute/call function (async).
 		*m: callmethod		&& Instantiate object and execute/call class method.
 		*m: callmethodasync		&& Instantiate object and execute/call class method (async).
+		*m: callobjectmethod		&& Call method on existing FoxPro object. Only used by CallObjectMethodAsync().
+		*m: callobjectmethodasync		&& Call method on existing FoxPro object (async).
 		*m: createnewobject		&& Create and return new object.
 		*m: createnewobjectasync		&& Create and return new object (async).
 		*m: createparameterclause		&& Create parameter clause with specified number of parameters.
@@ -102,6 +104,8 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="callmethodasync" display="CallMethodAsync"/>
 		<memberdata name="createnewobjectasync" display="CreateNewObjectAsync"/>
 		<memberdata name="execscriptasync" display="ExecScriptAsync"/>
+		<memberdata name="callobjectmethodasync" display="CallObjectMethodAsync"/>
+		<memberdata name="callobjectmethod" display="CallObjectMethod"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -153,6 +157,28 @@ DEFINE CLASS foxrun AS custom
 		
 		This.SetAsyncCommand("CALLMETHOD", loTaskCompletionSource, lcMethod, lcClassName, lcModule, lcInApplication, @laParameters)
 		
+	ENDPROC
+
+	PROCEDURE callobjectmethod		&& Call method on existing FoxPro object. Only used by CallObjectMethodAsync().
+		* Call method on existing FoxPro object. Only used by CallObjectMethodAsync().
+		Lparameters loObject, lcMethod, laParameters
+		Local lcParameterClause, lcMethodCall
+			
+		lcParameterClause = This.CreateParameterClause(@laParameters)
+		
+		Debugout Time(0), Program(), loObject.Name, lcMethod, lcParameterClause 
+			
+		lcMethodCall = Alltrim(lcMethod)+ "(" + lcParameterClause + ")"
+		Return loObject.&lcMethodCall
+	ENDPROC
+
+	PROCEDURE callobjectmethodasync		&& Call method on existing FoxPro object (async).
+		* Call method on existing FoxPro object (async)
+		Lparameters loTaskCompletionSource, loObject, lcMethod, laParameters
+		
+		Debugout Time(0), Program(), loObject.Name, lcMethod
+		
+		This.SetAsyncCommand("CALLOBJECTMETHOD", loTaskCompletionSource, lcMethod, loObject,,, @laParameters)
 	ENDPROC
 
 	PROCEDURE createnewobject		&& Create and return new object.
@@ -402,6 +428,8 @@ DEFINE CLASS foxrun AS custom
 			lvReturn = This.ExecScript(loAsyncCommand.cCommand, @laParameters)
 		Case lcCommandType == "CREATENEWOBJECT"
 			lvReturn = This.CreateNewObject(loAsyncCommand.cClass, loAsyncCommand.cModule, loAsyncCommand.cInApplication, @laParameters)
+		Case lcCommandType == "CALLOBJECTMETHOD"
+			lvReturn = This.CallObjectMethod(loAsyncCommand.cClass, loAsyncCommand.cCommand, @laParameters)
 		Otherwise
 		
 		EndCase
@@ -431,7 +459,8 @@ DEFINE CLASS foxrun AS custom
 		loAsyncCommand = NewObject("AsyncCommand", This.ClassLibrary)
 		loAsyncCommand.cCommandType = Evl(lcCommandType, "")
 		loAsyncCommand.cCommand = Evl(lcCommand, "")
-		loAsyncCommand.cClass = Evl(lcClass, "")
+		* cClass can be set to object
+		loAsyncCommand.cClass = Iif(Vartype(lcClass) = "O", lcClass, Evl(lcClass, ""))
 		loAsyncCommand.cModule = Evl(lcModule, "")
 		loAsyncCommand.cInApplication = Evl(lcInApplication, "")
 		If Type("laParameters", 1) = "A"

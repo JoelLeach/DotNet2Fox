@@ -427,6 +427,7 @@ namespace DotNet2Fox
             return result;
         }
 
+        // Execute FoxPro script (async)
         public async Task<dynamic> ExecScriptAsync(string script, params object[] parameters)
         {
             dynamic result;
@@ -434,6 +435,24 @@ namespace DotNet2Fox
             try
             {
                 foxRun.ExecScriptAsync(tcs, script, parameters);
+                result = await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+                result = null;
+            }
+            return result;
+        }
+
+        // Call method on existing FoxPro object (async)
+        public async Task<dynamic> CallObjectMethodAsync(dynamic foxObject, string methodName, params object[] parameters)
+        {
+            dynamic result;
+            var tcs = new TaskCompletionSourceWrapper();
+            try
+            {
+                foxRun.CallObjectMethodAsync(tcs, foxObject, methodName, parameters);
                 result = await tcs.Task;
             }
             catch (Exception ex)
