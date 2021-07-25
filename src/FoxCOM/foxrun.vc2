@@ -40,6 +40,7 @@ DEFINE CLASS foxrun AS custom
 
 	*<DefinedPropArrayMethod>
 		*m: call		&& Execute/call function.
+		*m: callasync		&& Execute/call function (async).
 		*m: callmethod		&& Instantiate object and execute/call class method.
 		*m: createnewobject		&& Create and return new object.
 		*m: createparameterclause		&& Create parameter clause with specified number of parameters.
@@ -94,6 +95,7 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="doasync" display="DoAsync"/>
 		<memberdata name="setasyncexception" display="SetAsyncException"/>
 		<memberdata name="docmdasync" display="DoCmdAsync"/>
+		<memberdata name="callasync" display="CallAsync"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -109,6 +111,15 @@ DEFINE CLASS foxrun AS custom
 		Return &lcFunctionCall
 		
 		
+	ENDPROC
+
+	PROCEDURE callasync		&& Execute/call function (async).
+		* Execute/call function (async)
+		Lparameters loTaskCompletionSource, lcFunction, laParameters
+		
+		Debugout Time(0), Program(), lcFunction
+		
+		This.SetAsyncCommand("CALL", loTaskCompletionSource, lcFunction,,,, @laParameters)
 	ENDPROC
 
 	PROCEDURE callmethod		&& Instantiate object and execute/call class method.
@@ -219,8 +230,6 @@ DEFINE CLASS foxrun AS custom
 		Debugout Time(0), Program(), lcPRG, lcInProgram
 		
 		This.SetAsyncCommand("DO", loTaskCompletionSource, lcPRG, lcInProgram,,, @laParameters)
-		
-		
 	ENDPROC
 
 	PROCEDURE docmd		&& Execute single command.

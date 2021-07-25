@@ -100,6 +100,17 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task CallAsyncFunctionTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                var result = await fox.CallAsync("Lower", "FOXTEST");
+                Assert.AreEqual(result, "foxtest");
+            }
+        }
+
+        [TestMethod()]
         public void CallPRGTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, true))
@@ -107,6 +118,18 @@ namespace DotNet2Fox.Tests
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var result = fox.Call("AddNumbers", 2, 3);
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
+        public async Task CallAsyncPRGTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                var result = await fox.CallAsync("AddNumbers", 2, 3);
                 Assert.AreEqual(result, 5);
             }
         }

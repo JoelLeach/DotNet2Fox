@@ -248,7 +248,24 @@ namespace DotNet2Fox
                 }
             }
             return result;
+        }
 
+        // Execute/call function (async)
+        public async Task<dynamic> CallAsync(string functionName, params object[] parameters)
+        {
+            dynamic result;
+            var tcs = new TaskCompletionSourceWrapper();
+            try
+            {
+                foxRun.CallAsync(tcs, functionName, parameters);
+                result = await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+                result = null;
+            }
+            return result;
         }
 
         // Instantiate object, call method on it, and release object
