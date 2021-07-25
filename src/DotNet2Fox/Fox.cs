@@ -356,6 +356,12 @@ namespace DotNet2Fox
             return result;
         }
 
+        // Release COM object reference to FoxPro object.
+        public void ReleaseComObject(object comObject)
+        {
+            Marshal.ReleaseComObject(comObject);
+        }
+
         // Setup timer
         private void CreateTimer()
         {
