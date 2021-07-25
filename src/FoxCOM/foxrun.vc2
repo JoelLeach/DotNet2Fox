@@ -44,6 +44,7 @@ DEFINE CLASS foxrun AS custom
 		*m: callmethod		&& Instantiate object and execute/call class method.
 		*m: callmethodasync		&& Instantiate object and execute/call class method (async).
 		*m: createnewobject		&& Create and return new object.
+		*m: createnewobjectasync		&& Create and return new object (async).
 		*m: createparameterclause		&& Create parameter clause with specified number of parameters.
 		*m: do		&& Execute program.
 		*m: doasync		&& Execute program (async).
@@ -98,6 +99,7 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="docmdasync" display="DoCmdAsync"/>
 		<memberdata name="callasync" display="CallAsync"/>
 		<memberdata name="callmethodasync" display="CallMethodAsync"/>
+		<memberdata name="createnewobjectasync" display="CreateNewObjectAsync"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -169,6 +171,15 @@ DEFINE CLASS foxrun AS custom
 		
 		Return loObject
 		
+	ENDPROC
+
+	PROCEDURE createnewobjectasync		&& Create and return new object (async).
+		* Create and return new object (async)
+		Lparameters loTaskCompletionSource, lcClassName, lcModule, lcInApplication, laParameters
+		
+		Debugout Time(0), Program(), lcClassName, lcModule, lcInApplication
+		
+		This.SetAsyncCommand("CREATENEWOBJECT", loTaskCompletionSource,, lcClassName, lcModule, lcInApplication, @laParameters)
 	ENDPROC
 
 	PROTECTED PROCEDURE createparameterclause		&& Create parameter clause with specified number of parameters.
@@ -377,6 +388,8 @@ DEFINE CLASS foxrun AS custom
 			lvReturn = This.CallMethod(loAsyncCommand.cCommand, loAsyncCommand.cClass, loAsyncCommand.cModule, loAsyncCommand.cInApplication, @laParameters)
 		Case lcCommandType == "EXECSCRIPT"
 			lvReturn = This.ExecScript(loAsyncCommand.cCommand, @laParameters)
+		Case lcCommandType == "CREATENEWOBJECT"
+			lvReturn = This.CreateNewObject(loAsyncCommand.cClass, loAsyncCommand.cModule, loAsyncCommand.cInApplication, @laParameters)
 		Otherwise
 		
 		EndCase

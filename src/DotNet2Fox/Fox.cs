@@ -296,6 +296,7 @@ namespace DotNet2Fox
             return result;
         }
 
+        // Instantiate object, call method on it, and release object (async)
         public async Task<dynamic> CallMethodAsync(string methodName, string className, string module, string inApplication = "", params object[] parameters)
         {
             dynamic result;
@@ -337,6 +338,24 @@ namespace DotNet2Fox
                 {
                     result = null;
                 }
+            }
+            return result;
+        }
+
+        // Instantiate FoxPro object using NewObject() (async).
+        public async Task<dynamic> CreateNewObjectAsync(string className, string module, string inApplication = "", params object[] parameters)
+        {
+            dynamic result;
+            var tcs = new TaskCompletionSourceWrapper();
+            try
+            {
+                foxRun.CreateNewObjectAsync(tcs, className, module, inApplication, parameters);
+                result = await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+                result = null;
             }
             return result;
         }

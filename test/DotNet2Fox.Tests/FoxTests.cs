@@ -196,6 +196,19 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task CreateObjectAsyncVCXTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                var foxTest = await fox.CreateNewObjectAsync("FoxTest", "FoxTest.vcx");
+                var result = foxTest.AddNumbers(2, 3);
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
         public void CreateObjectPRGTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, true))
@@ -203,6 +216,19 @@ namespace DotNet2Fox.Tests
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var foxTest = fox.CreateNewObject("FoxTest", "FoxTest.prg");
+                var result = foxTest.AddNumbers(2, 3);
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
+        public async Task CreateObjectAsyncPRGTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                var foxTest = await fox.CreateNewObjectAsync("FoxTest", "FoxTest.prg");
                 var result = foxTest.AddNumbers(2, 3);
                 Assert.AreEqual(result, 5);
             }
