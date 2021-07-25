@@ -255,6 +255,26 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task ExecScriptAsyncTest()
+        {
+            var script = @"* Test FoxPro script used for unit testing
+                            Lparameters lnNum1, lnNum2
+                            Local lnResult
+
+                            lnResult = lnNum1 + lnNum2
+                            ? lnResult
+
+                            Return lnResult";
+
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                var result = await fox.ExecScriptAsync(script, 2, 3);
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
         public void ErrorTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, true))

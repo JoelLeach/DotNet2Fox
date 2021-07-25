@@ -427,6 +427,23 @@ namespace DotNet2Fox
             return result;
         }
 
+        public async Task<dynamic> ExecScriptAsync(string script, params object[] parameters)
+        {
+            dynamic result;
+            var tcs = new TaskCompletionSourceWrapper();
+            try
+            {
+                foxRun.ExecScriptAsync(tcs, script, parameters);
+                result = await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+                result = null;
+            }
+            return result;
+        }
+
         // Release COM object reference to FoxPro object.
         public void ReleaseComObject(object comObject)
         {

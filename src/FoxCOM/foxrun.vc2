@@ -53,6 +53,7 @@ DEFINE CLASS foxrun AS custom
 		*m: eval		&& Evaluate expression.
 		*m: evalasync		&& Evaluate expression (async).
 		*m: execscript		&& Execute script.
+		*m: execscriptasync		&& Execute script (async).
 		*m: factory		&& Create and return object using abstract factory.
 		*m: geterrormessage		&& Get last recorded error.  Requires error handler in Fox app to set _Screen.cErrorMessage.
 		*m: processasynccommand		&& Process async command.
@@ -100,6 +101,7 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="callasync" display="CallAsync"/>
 		<memberdata name="callmethodasync" display="CallMethodAsync"/>
 		<memberdata name="createnewobjectasync" display="CreateNewObjectAsync"/>
+		<memberdata name="execscriptasync" display="ExecScriptAsync"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -295,7 +297,7 @@ DEFINE CLASS foxrun AS custom
 	ENDPROC
 
 	PROCEDURE execscript		&& Execute script.
-		* Execute script on worker
+		* Execute script
 		Lparameters lcScript, laParameters
 		Local lcParameterClause
 		
@@ -308,6 +310,16 @@ DEFINE CLASS foxrun AS custom
 			Return ExecScript(lcScript)
 		EndIf 
 		
+		
+	ENDPROC
+
+	PROCEDURE execscriptasync		&& Execute script (async).
+		* Execute script (async)
+		Lparameters loTaskCompletionSource, lcScript, laParameters
+		
+		Debugout Time(0), Program(), "(Script)"
+		
+		This.SetAsyncCommand("EXECSCRIPT", loTaskCompletionSource, lcScript,,,, @laParameters)
 		
 	ENDPROC
 
