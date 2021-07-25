@@ -42,6 +42,7 @@ DEFINE CLASS foxrun AS custom
 		*m: call		&& Execute/call function.
 		*m: callasync		&& Execute/call function (async).
 		*m: callmethod		&& Instantiate object and execute/call class method.
+		*m: callmethodasync		&& Instantiate object and execute/call class method (async).
 		*m: createnewobject		&& Create and return new object.
 		*m: createparameterclause		&& Create parameter clause with specified number of parameters.
 		*m: do		&& Execute program.
@@ -96,6 +97,7 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="setasyncexception" display="SetAsyncException"/>
 		<memberdata name="docmdasync" display="DoCmdAsync"/>
 		<memberdata name="callasync" display="CallAsync"/>
+		<memberdata name="callmethodasync" display="CallMethodAsync"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -136,6 +138,16 @@ DEFINE CLASS foxrun AS custom
 		lcMethodCall = Alltrim(lcMethod)+ "(" + lcParameterClause + ")"
 		Return loObject.&lcMethodCall
 		
+		
+	ENDPROC
+
+	PROCEDURE callmethodasync		&& Instantiate object and execute/call class method (async).
+		* Instantiate object and execute/call class method (async)
+		Lparameters loTaskCompletionSource, lcMethod, lcClassName, lcModule, lcInApplication, laParameters
+		
+		Debugout Time(0), Program(), lcMethod, lcClassName, lcModule, lcInApplication
+		
+		This.SetAsyncCommand("CALLMETHOD", loTaskCompletionSource, lcMethod, lcClassName, lcModule, lcInApplication, @laParameters)
 		
 	ENDPROC
 

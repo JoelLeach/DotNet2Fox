@@ -147,6 +147,18 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task CallMethodAsyncVCXTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                var result = await fox.CallMethodAsync("AddNumbers", "FoxTest", "FoxTest.vcx", "", 2, 3);
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
         public void CallMethodPRGTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, true))
@@ -154,6 +166,18 @@ namespace DotNet2Fox.Tests
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
                 var result = fox.CallMethod("AddNumbers", "FoxTest", "FoxTest.prg", "", 2, 3);
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
+        public async Task CallMethodAsyncPRGTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                var result = await fox.CallMethodAsync("AddNumbers", "FoxTest", "FoxTest.prg", "", 2, 3);
                 Assert.AreEqual(result, 5);
             }
         }
