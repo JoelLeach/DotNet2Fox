@@ -44,11 +44,10 @@ namespace DotNet2Fox
             CreateTimer();
         }
 
-        // Start request (called automatically by FoxPool)
+        // Start request (called automatically by FoxPool.GetObject())
         // Initialize FoxRun object before calling other methods
         public void StartRequest(string key)
         {
-
             // Lock to make sure previous request is completely disposed before starting new request
             lock (requestLock)
             {
@@ -64,6 +63,28 @@ namespace DotNet2Fox
                 InstantiateFoxRun();
                 CallFoxAppHook("StartRequest", key);
             }
+        }
+
+        // Start request async (called automatically by FoxPool.GetObjectAsync())
+        // Same as StartRequest() except it calls StartAppAsync() and async hook
+        public async Task StartRequestAsync(string key)
+        {
+            // Lock to make sure previous request is completely disposed before starting new request
+            lock (requestLock)
+            {
+                // Reset timer
+                foxTimer.Stop();
+                requestRunning = true;
+                // Reset disposal 
+                disposedValue = false;
+                Debug.WriteLine("StartRequest(): " + id);
+            }
+            // await cannot be inside lock, so moved the rest of the code outside
+            // Make sure app started for current key
+            await StartAppAsync(key);
+            // Create FoxRun
+            InstantiateFoxRun();
+            await CallFoxAppHookAsync("StartRequest", key);
         }
 
         // Start application
@@ -91,7 +112,33 @@ namespace DotNet2Fox
                     StartApp(key);
                 }
             }
+        }
 
+        // Start application (async)
+        // Same as StartApp() but calls async hook
+        private async Task StartAppAsync(string key)
+        {
+            try
+            {
+                if (foxCOM == null || this.key != key)
+                {
+                    Debug.WriteLine("StartApp(): " + id);
+                    this.key = key;
+                    InstantiateFoxCOM();
+                    InstantiateFoxRun();
+                    await CallFoxAppHookAsync("StartApp", key);
+                }
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 1);
+                // If COM failure, then retry one time per request
+                if (retryAfterError)
+                {
+                    CheckFoxCOM();
+                    await StartAppAsync(key);
+                }
+            }
         }
 
         // Call app-specific code
@@ -113,6 +160,7 @@ namespace DotNet2Fox
                             foxApp.EndRequest(this, key, debugMode);
                             break;
                         case "endapp":
+                            // Start request to ensure this hook can be run
                             StartRequest(key);
                             foxApp.EndApp(this, key, debugMode);
                             break;
@@ -133,7 +181,41 @@ namespace DotNet2Fox
                     }
                 }
             }
+        }
 
+        // Call app-specific code (async)
+        private async Task CallFoxAppHookAsync(string hookName, string key)
+        {
+            if (foxApp != null)
+            {
+                try
+                {
+                    switch (hookName.ToLower())
+                    {
+                        case "startapp":
+                            await foxApp.StartAppAsync(this, key, debugMode);
+                            break;
+                        case "startrequest":
+                            await foxApp.StartRequestAsync(this, key, debugMode);
+                            break;
+                        // Async versions are not included for End* hooks, because .NET 4.x does not have IAsyncDisposable interface
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // UPDATE: Decided automatically retrying commands is probably a bad idea, 
+                    //  so setting retries to zero.
+                    HandleError(ex, 0);
+                    //HandleError(e, 99);
+                    if (retryAfterError)
+                    {
+                        // If COM failure, then skip hook
+                        // Hook will run again if command is retried
+                    }
+                }
+            }
         }
 
         // Execute single FoxPro command

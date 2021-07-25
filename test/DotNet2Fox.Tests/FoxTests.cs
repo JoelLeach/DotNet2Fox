@@ -373,6 +373,17 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task FoxAppAsyncTest()
+        {
+            using (Fox fox = new Fox("FoxTests", new FoxTestApp(), 60, true))
+            {
+                await fox.StartRequestAsync("FoxTests");
+                var result = await fox.EvalAsync("2 + 3");
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
         public void PerformanceTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, false))

@@ -22,6 +22,18 @@ namespace DotNet2Fox.Tests
             FoxPool.ClearPool();
         }
 
+        [TestMethod()]
+        public async Task PoolGetObjectAsyncTest()
+        {
+            FoxPool.DebugMode = true;
+            using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
+            {
+                var result = await fox.EvalAsync("1+1");
+                Assert.AreEqual(result, 2);
+            }
+            FoxPool.ClearPool();
+        }
+
         private void LoadTest(int iterations)
         {
             Debug.WriteLine("==== Begin LoadTest: " + iterations.ToString() + " ===");
@@ -72,7 +84,7 @@ namespace DotNet2Fox.Tests
                             .Select(async i =>
                             {
                                 Debug.WriteLine("********** Load Test Async: " + i.ToString());
-                                using (Fox fox = FoxPool.GetObject("FoxTests"))
+                                using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
                                 {
                                     //fox.DoCmd("? 'Load Test', " + i.ToString());
                                     // fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
@@ -143,6 +155,15 @@ namespace DotNet2Fox.Tests
             FoxPool.DebugMode = true;
             FoxPool.SetFoxAppType<FoxTestApp>();
             LoadTest(500);
+            FoxPool.ResetFoxAppType();
+        }
+
+        [TestMethod()]
+        public async Task PoolHeavyLoadFoxAppAsyncTest()
+        {
+            FoxPool.DebugMode = true;
+            FoxPool.SetFoxAppType<FoxTestApp>();
+            await LoadTestAsync(500);
             FoxPool.ResetFoxAppType();
         }
 

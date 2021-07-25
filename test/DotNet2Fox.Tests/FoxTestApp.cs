@@ -1,11 +1,4 @@
-﻿using DotNet2Fox;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace DotNet2Fox.Tests
 {
@@ -26,9 +19,19 @@ namespace DotNet2Fox.Tests
             fox.DoCmd("? 'StartApp()'");
         }
 
+        public async Task StartAppAsync(Fox fox, string key, bool debugMode)
+        {
+            await fox.DoCmdAsync("? 'StartAppAsync()'"); ;
+        }
+
         public void StartRequest(Fox fox, string key, bool debugMode)
         {
             fox.DoCmd("? 'StartRequest()'");
+        }
+
+        public async Task StartRequestAsync(Fox fox, string key, bool debugMode)
+        {
+            await fox.DoCmdAsync("? 'StartRequestAsync()'"); ;
         }
     }
 }

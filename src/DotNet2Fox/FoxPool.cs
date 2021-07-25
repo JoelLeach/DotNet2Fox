@@ -103,6 +103,57 @@ namespace DotNet2Fox
             return fox;
         }
 
+        // Get Fox object from pool (async)
+        // Same as GetObject except it calls StartRequestAsync() and it uses Task.Delay() instead of Thread.Sleep()
+        public static async Task<Fox> GetObjectAsync(string key)
+        {
+            Fox fox = null;
+
+            while (true)
+            {
+                // Try to use existing object in pool
+                if (poolEnabled && pool.Count > 0)
+                {
+                    // Prefer objects that start with key
+                    fox = GetObjectFromPool(key);
+
+                    // If none found, optionally recycle one of the other objects in the pool with a different key
+                    // Recycling can reduce loading times, but it can also cause problems if the Fox app is not prepared 
+                    // to handle a different key.
+                    if (fox == null && RecycleOtherKeys)
+                    {
+                        fox = GetObjectFromPool();
+                    }
+                }
+
+                // If no objects are available, create a new one
+                if (fox == null)
+                {
+                    if (instCount < PoolSize)
+                    {
+                        instCount++;
+                        Debug.WriteLine("GetObject() not found: " + key);
+                        IFoxApp foxApp = CreateFoxAppObject();
+                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
+                        break;
+                    }
+                    else
+                    {
+                        // All instances are created and busy, so wait for one to become available
+                        await Task.Delay(50);
+                    }
+                }
+                else
+                {
+                    poolCount++;
+                    break;
+                }
+            }
+
+            await fox.StartRequestAsync(key);
+            return fox;
+        }
+
         // Get object from pool with or without key
         private static Fox GetObjectFromPool(string key = null)
         {
