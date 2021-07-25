@@ -24,6 +24,16 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task DoCmdAsyncTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                await fox.DoCmdAsync("? 'Fox Unit Test'");
+            }
+        }
+
+        [TestMethod()]
         public void EvalTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, true))

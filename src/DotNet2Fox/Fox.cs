@@ -158,6 +158,24 @@ namespace DotNet2Fox
             }
         }
 
+        // Execute single FoxPro command (async)
+        public async Task<dynamic> DoCmdAsync(string command)
+        {
+            dynamic result;
+            var tcs = new TaskCompletionSourceWrapper();
+            try
+            {
+                foxRun.DoCmdAsync(tcs, command);
+                result = await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+                result = null;
+            }
+            return result;
+        }
+
         // FoxPro Evaluate() function
         public dynamic Eval(string expression)
         {

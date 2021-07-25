@@ -45,7 +45,8 @@ DEFINE CLASS foxrun AS custom
 		*m: createparameterclause		&& Create parameter clause with specified number of parameters.
 		*m: do		&& Execute program.
 		*m: doasync		&& Execute program (async).
-		*m: docmd		&& Do command.
+		*m: docmd		&& Execute single command.
+		*m: docmdasync		&& Execute single command (async).
 		*m: eval		&& Evaluate expression.
 		*m: evalasync		&& Evaluate expression (async).
 		*m: execscript		&& Execute script.
@@ -92,6 +93,7 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="otaskcompletionsource" display="oTaskCompletionSource"/>
 		<memberdata name="doasync" display="DoAsync"/>
 		<memberdata name="setasyncexception" display="SetAsyncException"/>
+		<memberdata name="docmdasync" display="DoCmdAsync"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -221,7 +223,7 @@ DEFINE CLASS foxrun AS custom
 		
 	ENDPROC
 
-	PROCEDURE docmd		&& Do command.
+	PROCEDURE docmd		&& Execute single command.
 		Lparameters lcCommand
 		
 		Debugout Time(0), Program(), lcCommand
@@ -231,6 +233,15 @@ DEFINE CLASS foxrun AS custom
 		* Return _VFP.DoCmd(lcCommand)
 		
 		
+	ENDPROC
+
+	PROCEDURE docmdasync		&& Execute single command (async).
+		* Evaluate single command (async)
+		Lparameters loTaskCompletionSource, lcCommand
+		
+		Debugout Time(0), Program(), lcCommand
+		
+		This.SetAsyncCommand("DOCMD", loTaskCompletionSource, lcCommand)
 	ENDPROC
 
 	PROCEDURE eval		&& Evaluate expression.
