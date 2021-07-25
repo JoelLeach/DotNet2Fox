@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace DotNet2Fox.Tests
 {
@@ -24,17 +26,63 @@ namespace DotNet2Fox.Tests
         {
             Debug.WriteLine("==== Begin LoadTest: " + iterations.ToString() + " ===");
             FoxPool.ClearPool();
-            Parallel.For(1, iterations, (i, loopState) =>
+
+            // Task.WhenAll method is similar to async test
+            var tasks = new List<Task>();
+            for (int i = 0; i < iterations; i++)
             {
-                using (Fox fox = FoxPool.GetObject("FoxTests"))
+                var j = i;  // needed to Task.Run to see variable
+                tasks.Add(Task.Run(() =>
                 {
-                    //fox.DoCmd("? 'Load Test', " + i.ToString());
-                    //fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
-                    var result = fox.Eval("1+1");
-                    Assert.AreEqual(result, 2);
-                }
-            });
+                    Debug.WriteLine("********** Load Test: " + j.ToString());
+                    using (Fox fox = FoxPool.GetObject("FoxTests"))
+                    {
+                        //fox.DoCmd("? 'Load Test', " + i.ToString());
+                        // fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
+                        var result = fox.Eval("1+1");
+                        Assert.AreEqual(result, 2);
+                    }
+                }));
+            }
+            Task.WhenAll(tasks).Wait();
+
+            // Parallel.For works too, but only for sync load test
+            //Parallel.For(1, iterations, (i, loopState) =>
+            //{
+            //    Debug.WriteLine("********** Load Test: " + i.ToString());
+            //    using (Fox fox = FoxPool.GetObject("FoxTests"))
+            //    {
+            //        //fox.DoCmd("? 'Load Test', " + i.ToString());
+            //        //fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
+            //        var result = fox.Eval("1+1");
+            //        Assert.AreEqual(result, 2);
+            //    }
+            //});
             Debug.WriteLine("==== End LoadTest: " + iterations.ToString() + " ===");
+            FoxPool.ClearPool();
+        }
+
+        private async Task LoadTestAsync(int iterations)
+        {
+            Debug.WriteLine("==== Begin LoadTestAsync: " + iterations.ToString() + " ===");
+            FoxPool.ClearPool();
+            // Parallel.For and async don't mix
+            // Use Tasks.WhenAll() instead: https://stackoverflow.com/a/19292500/6388118
+            var tasks = Enumerable.Range(0, iterations)
+                            .Select(async i =>
+                            {
+                                Debug.WriteLine("********** Load Test Async: " + i.ToString());
+                                using (Fox fox = FoxPool.GetObject("FoxTests"))
+                                {
+                                    //fox.DoCmd("? 'Load Test', " + i.ToString());
+                                    // fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
+                                    var result = await fox.EvalAsync("1+1");
+                                    Assert.AreEqual(result, 2);
+                                }
+                            })
+                            .ToArray();
+            await Task.WhenAll(tasks);
+            Debug.WriteLine("==== End LoadTestAsync: " + iterations.ToString() + " ===");
             FoxPool.ClearPool();
         }
 
@@ -46,6 +94,13 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task PoolLowLoadTestAsync()
+        {
+            FoxPool.DebugMode = true;
+            await LoadTestAsync(50);
+        }
+
+        [TestMethod()]
         public void PoolHeavyLoadTest()
         {
             FoxPool.DebugMode = true;
@@ -53,10 +108,24 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public async Task PoolHeavyLoadTestAsync()
+        {
+            FoxPool.DebugMode = true;
+            await LoadTestAsync(1000);
+        }
+
+        [TestMethod()]
         public void PoolHeavyLoadNoDebugTest()
         {
             FoxPool.DebugMode = false;
             LoadTest(1000);
+        }
+
+        [TestMethod()]
+        public async Task PoolHeavyLoadNoDebugTestAsync()
+        {
+            FoxPool.DebugMode = false;
+            await LoadTestAsync(1000);
         }
 
         [TestMethod()]
