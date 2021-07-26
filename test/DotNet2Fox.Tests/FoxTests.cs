@@ -275,6 +275,19 @@ namespace DotNet2Fox.Tests
         }
 
         [TestMethod()]
+        public void CallObjectMethodTest()
+        {
+            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            {
+                fox.StartRequest("FoxTests");
+                fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
+                var foxTest = fox.CreateNewObject("FoxTest", "FoxTest.vcx");
+                var result = fox.CallObjectMethod(foxTest, "AddNumbers", 2, 3);
+                Assert.AreEqual(result, 5);
+            }
+        }
+
+        [TestMethod()]
         public async Task CallObjectMethodAsyncTest()
         {
             using (Fox fox = new Fox("FoxTests", null, 60, true))

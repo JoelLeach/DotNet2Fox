@@ -527,6 +527,23 @@ namespace DotNet2Fox
             return result;
         }
 
+        // Call method on existing FoxPro object
+        // Usually no need to use directly, but could be useful calling from extension methods
+        public dynamic CallObjectMethod(dynamic foxObject, string methodName, params object[] parameters)
+        {
+            dynamic result;
+            try
+            {
+                result = foxRun.CallObjectMethod(foxObject, methodName, parameters);
+            }
+            catch (Exception ex)
+            {
+                HandleError(ex, 0);
+                result = null;
+            }
+            return result;
+        }
+
         // Call method on existing FoxPro object (async)
         public async Task<dynamic> CallObjectMethodAsync(dynamic foxObject, string methodName, params object[] parameters)
         {
