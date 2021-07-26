@@ -4,6 +4,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
+using System;
 
 namespace DotNet2Fox.Tests
 {
@@ -258,5 +259,49 @@ namespace DotNet2Fox.Tests
             txtTest.Value = "Test";
         }
 
+        [TestMethod()]
+        public void PoolPerformanceTest()
+        {
+            // Performance when calling single Fox instance multiple times
+            FoxPool.DebugMode = true;
+            int iterations = 100;
+            var stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                using (Fox fox = FoxPool.GetObject("FoxTests"))
+                {
+                    var result = fox.Eval("1+1");
+                    Assert.AreEqual(result, 2);
+                }
+            }
+            stopwatch.Stop();
+            var ms = stopwatch.ElapsedMilliseconds;
+            decimal msPerCall = decimal.Divide(ms, iterations);
+            Console.WriteLine($"Total time: {ms} ms");
+            Console.WriteLine($"Time per call: {msPerCall} ms");
+            FoxPool.ClearPool();
+        }
+
+        [TestMethod()]
+        public async Task PoolPerformanceAsyncTest()
+        {
+            FoxPool.DebugMode = true;
+            int iterations = 100;
+            var stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
+                {
+                    var result = await fox.EvalAsync("1+1");
+                    Assert.AreEqual(result, 2);
+                }
+            }
+            stopwatch.Stop();
+            var ms = stopwatch.ElapsedMilliseconds;
+            decimal msPerCall = decimal.Divide(ms, iterations);
+            Console.WriteLine($"Total time: {ms} ms");
+            Console.WriteLine($"Time per call: {msPerCall} ms");
+            FoxPool.ClearPool();
+        }
     }
 }
