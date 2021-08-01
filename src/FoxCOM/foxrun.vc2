@@ -43,7 +43,7 @@ DEFINE CLASS foxrun AS custom
 		*m: callasync		&& Execute/call function (async).
 		*m: callmethod		&& Instantiate object and execute/call class method.
 		*m: callmethodasync		&& Instantiate object and execute/call class method (async).
-		*m: callobjectmethod		&& Call method on existing FoxPro object. Only used by CallObjectMethodAsync().
+		*m: callobjectmethod		&& Call method on existing FoxPro object. Used by CallObjectMethodAsync() or maybe extension methods.
 		*m: callobjectmethodasync		&& Call method on existing FoxPro object (async).
 		*m: createnewobject		&& Create and return new object.
 		*m: createnewobjectasync		&& Create and return new object (async).
@@ -62,7 +62,9 @@ DEFINE CLASS foxrun AS custom
 		*m: setasynccommand		&& Setup async command and timer to execute it.
 		*m: setasyncexception		&& Set exception in .NET Task Completion Source.
 		*m: setprivatedatasession		&& Set up private data session for object.
+		*m: setstepon		&& SET STEP ON before next call.
 		*p: lquitondestroy		&& When set to .T., will Quit FoxPro when object is destroyed.
+		*p: lsetstepon		&& When .T., will SET STEP ON before next call.
 		*p: oasynccommand		&& Async command to execute.
 		*p: oasynctimer		&& Timer used to execute async command.
 		*p: osession		&& Reference to private data session.
@@ -70,8 +72,9 @@ DEFINE CLASS foxrun AS custom
 		*p: _memberdata		&& XML Metadata for customizable properties
 	*</DefinedPropArrayMethod>
 
-	PROTECTED oasynccommand,oasynctimer,otaskcompletionsource
+	PROTECTED lsetstepon,oasynccommand,oasynctimer,otaskcompletionsource
 	lquitondestroy = .F.		&& When set to .T., will Quit FoxPro when object is destroyed.
+	lsetstepon = .F.		&& When .T., will SET STEP ON before next call.
 	Name = "foxrun"
 	oasynccommand = 		&& Async command to execute.
 	oasynctimer = 		&& Timer used to execute async command.
@@ -106,6 +109,8 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="execscriptasync" display="ExecScriptAsync"/>
 		<memberdata name="callobjectmethodasync" display="CallObjectMethodAsync"/>
 		<memberdata name="callobjectmethod" display="CallObjectMethod"/>
+		<memberdata name="lsetstepon" display="lSetStepOn"/>
+		<memberdata name="setstepon" display="SetStepOn"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -118,6 +123,13 @@ DEFINE CLASS foxrun AS custom
 		Debugout Time(0), Program(), lcFunction, lcParameterClause 
 			
 		lcFunctionCall = Alltrim(lcFunction)+ "(" + lcParameterClause + ")"
+		
+		If This.lSetStepOn and _VFP.StartMode = 1
+			This.lSetStepOn = .f.
+			Set Step On
+			* Step into &lcFunctionCall below
+		EndIf 
+		
 		Return &lcFunctionCall
 		
 		
@@ -142,6 +154,12 @@ DEFINE CLASS foxrun AS custom
 		
 		Debugout Time(0), Program(), lcMethod, lcClassName, lcModule, lcInApplication, lcParameterClause 
 			
+		If This.lSetStepOn and _VFP.StartMode = 1
+			This.lSetStepOn = .f.
+			Set Step On
+			* Step into NewObject() or loObject.&lcMethodCall below
+		EndIf 
+		
 		loObject = NewObject(lcClassName, lcModule, lcInApplication)
 		lcMethodCall = Alltrim(lcMethod)+ "(" + lcParameterClause + ")"
 		Return loObject.&lcMethodCall
@@ -159,8 +177,9 @@ DEFINE CLASS foxrun AS custom
 		
 	ENDPROC
 
-	PROCEDURE callobjectmethod		&& Call method on existing FoxPro object. Only used by CallObjectMethodAsync().
-		* Call method on existing FoxPro object. Only used by CallObjectMethodAsync().
+	PROCEDURE callobjectmethod		&& Call method on existing FoxPro object. Used by CallObjectMethodAsync() or maybe extension methods.
+		* Call method on existing FoxPro object. 
+		* Used by CallObjectMethodAsync() or maybe extension methods.
 		Lparameters loObject, lcMethod, laParameters
 		Local lcParameterClause, lcMethodCall
 			
@@ -169,6 +188,13 @@ DEFINE CLASS foxrun AS custom
 		Debugout Time(0), Program(), loObject.Name, lcMethod, lcParameterClause 
 			
 		lcMethodCall = Alltrim(lcMethod)+ "(" + lcParameterClause + ")"
+		
+		If This.lSetStepOn and _VFP.StartMode = 1
+			This.lSetStepOn = .f.
+			Set Step On
+			* Step into loObject.&lcMethodCall below
+		EndIf 
+		
 		Return loObject.&lcMethodCall
 	ENDPROC
 
@@ -191,9 +217,19 @@ DEFINE CLASS foxrun AS custom
 		lcParameterClause = This.CreateParameterClause(@laParameters)
 		If !Empty(lcParameterClause)
 			Debugout Time(0), Program(), lcClassName, lcModule, lcInApplication, lcParameterClause 
+			If This.lSetStepOn and _VFP.StartMode = 1
+				This.lSetStepOn = .f.
+				Set Step On
+				* Step into NewObject() call below
+			EndIf 
 			loObject = NewObject(lcClassName, lcModule, lcInApplication, &lcParameterClause)
 		Else 
 			Debugout Time(0), Program(), lcClassName, lcModule, lcInApplication
+			If This.lSetStepOn and _VFP.StartMode = 1
+				This.lSetStepOn = .f.
+				Set Step On
+				* Step into NewObject() call below
+			EndIf 
 			loObject = NewObject(lcClassName, lcModule, lcInApplication)
 		EndIf 
 		
@@ -247,6 +283,11 @@ DEFINE CLASS foxrun AS custom
 		Set Datasession To 1
 		This.oSession = .f.
 		
+		* Make sure debugger not left open
+		If _VFP.StartMode = 1
+			Release Windows "Visual FoxPro Debugger"
+		EndIf 
+		
 		If This.lQuitOnDestroy
 			Quit
 		EndIf 
@@ -264,10 +305,20 @@ DEFINE CLASS foxrun AS custom
 		If !Empty(lcParameterClause)
 			* DO passes all parameters by reference, so strip out "@" to avoid syntax error
 		*JAL*		lcParameterClause = Chrtran(lcParameterClause, "@", "")
-			Debugout Time(0), Program(), lcPRG, lcInProgram, lcParameterClause 	
+			Debugout Time(0), Program(), lcPRG, lcInProgram, lcParameterClause
+			If This.lSetStepOn and _VFP.StartMode = 1
+				This.lSetStepOn = .f.
+				Set Step On
+				* Step into DO call below
+			EndIf 
 			Do (lcPRG) in (lcInProgram) with &lcParameterClause
 		Else 
 			Debugout Time(0), Program(), lcPRG, lcInProgram
+			If This.lSetStepOn and _VFP.StartMode = 1
+				This.lSetStepOn = .f.
+				Set Step On
+				* Step into DO call below
+			EndIf 
 			Do (lcPRG) in (lcInProgram)
 		EndIf 
 		
@@ -287,6 +338,12 @@ DEFINE CLASS foxrun AS custom
 		Lparameters lcCommand
 		
 		Debugout Time(0), Program(), lcCommand
+		
+		If This.lSetStepOn and _VFP.StartMode = 1
+			This.lSetStepOn = .f.
+			Set Step On
+			* Step into &lcCommand below
+		EndIf 
 		
 		&lcCommand
 		
@@ -309,7 +366,14 @@ DEFINE CLASS foxrun AS custom
 		
 		Debugout Time(0), Program(), lcExpression
 		
+		If This.lSetStepOn and _VFP.StartMode = 1
+			This.lSetStepOn = .f.
+			Set Step On
+			* Step into Evaluate() call below
+		EndIf 
+		
 		Return Evaluate(lcExpression)
+		
 		* Return _VFP.Eval(lcExpression)
 	ENDPROC
 
@@ -330,9 +394,19 @@ DEFINE CLASS foxrun AS custom
 		lcParameterClause = This.CreateParameterClause(@laParameters)
 		If !Empty(lcParameterClause)
 			Debugout Time(0), Program(), "(Script)", lcParameterClause 
+			If This.lSetStepOn and _VFP.StartMode = 1
+				This.lSetStepOn = .f.
+				Set Step On
+				* Step into ExecScript() call below
+			EndIf 
 			Return ExecScript(lcScript, &lcParameterClause)
 		Else
 			Debugout Time(0), Program(), "(Script)"
+			If This.lSetStepOn and _VFP.StartMode = 1
+				This.lSetStepOn = .f.
+				Set Step On
+				* Step into ExecScript() call below
+			EndIf 
 			Return ExecScript(lcScript)
 		EndIf 
 		
@@ -502,6 +576,12 @@ DEFINE CLASS foxrun AS custom
 		Debugout Time(0), Program(), Alltrim(Str(Set("Datasession")))
 		
 		
+	ENDPROC
+
+	PROCEDURE setstepon		&& SET STEP ON before next call.
+		* SET STEP ON before next call
+		* lSetStepOn Property will be checked before each call
+		This.lSetStepOn = .t. 
 	ENDPROC
 
 ENDDEFINE

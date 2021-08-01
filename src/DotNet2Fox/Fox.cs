@@ -562,6 +562,17 @@ namespace DotNet2Fox
             return result;
         }
 
+        /// <summary>
+        /// Set Step On before the next call using Fox object.
+        /// </summary>
+        public void SetStepOn()
+        {
+            if (debugMode)
+            {
+                foxRun.SetStepOn();
+            }
+        }
+
         // Release COM object reference to FoxPro object.
         public void ReleaseComObject(object comObject)
         {
