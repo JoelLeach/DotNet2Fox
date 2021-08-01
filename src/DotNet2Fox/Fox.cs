@@ -11,27 +11,86 @@ using Microsoft.CSharp.RuntimeBinder;
 
 namespace DotNet2Fox
 {
+    /// <summary>
+    /// Execute Visual FoxPro code from .NET.
+    /// </summary>
     public class Fox : IDisposable
     {
-
+        /// <summary>
+        /// FoxCOM object. Simple COM interface that is registered with FoxCOM.exe.
+        /// </summary>
         private dynamic foxCOM;
+        /// <summary>
+        /// FoxRun object used to execute code inside VFP.
+        /// </summary>
         private dynamic foxRun;
+        /// <summary>
+        /// Timer that releases object from pool after period of inactivity.
+        /// </summary>
         private Timer foxTimer;
+        /// <summary>
+        /// Key used to differentiate Fox object within pool.
+        /// </summary>
         private string key;
+        /// <summary>
+        /// FoxApp object with Start/End hooks containing application specific code.
+        /// </summary>
         private IFoxApp foxApp;
-        // Seconds of inactivity before foxCOM object is released
+        /// <summary>
+        /// Seconds of inactivity before foxCOM object is released.
+        /// </summary>
         private int foxTimeout;
+        /// <summary>
+        /// When true, commands are executed within Visual FoxPro IDE capable of debugging.
+        /// </summary>
         private bool debugMode;
+        /// <summary>
+        /// When true, Fox object is used within pool.
+        /// </summary>
         private bool usingPool;
-        public string id { get; set; } // unique object id
-        private object requestLock = new Object();
+        /// <summary>
+        /// Lock to make sure previous request is completely disposed before starting new request.
+        /// </summary>
+        private readonly object requestLock = new object();
+        /// <summary>
+        /// Is true while FoxCOM is being released. Prevents re-entry while release is running.
+        /// </summary>
         private bool releasingFoxCOM;
+        /// <summary>
+        /// Is true while request is running.
+        /// </summary>
         private bool requestRunning;
+        /// <summary>
+        /// Called on a timer from FoxPro to make sure DotNet is still alive.
+        /// If not, then FoxPro instances will quit.
+        /// </summary>
         private TestCallback callback;
+        /// <summary>
+        /// Number of times an operation has been retried after an error.
+        /// </summary>
         private int retries = 0;
+        /// <summary>
+        /// If set to true in HandleError(), operation may be retried.
+        /// </summary>
         private bool retryAfterError;
+
+        /// <summary>
+        /// Unique Fox object ID. Used for DotNet2Fox internal debugging.
+        /// </summary>
+        public string Id { get; set; }
+        /// <summary>
+        /// Process ID of VFP/COM instance.
+        /// </summary>
         public int ProcessId;
 
+        /// <summary>
+        /// Execute FoxPro code from .NET.
+        /// </summary>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
+        /// <param name="foxApp">FoxApp object with Start/End hooks containing application specific code.</param>
+        /// <param name="foxTimeout">Seconds of inactivity before foxCOM object is released.</param>
+        /// <param name="debugMode">When true, commands are executed within Visual FoxPro IDE capable of debugging.</param>
+        /// <param name="usingPool">When true, Fox object is used within pool.</param>
         public Fox(string key, IFoxApp foxApp = null, int foxTimeout = 60, bool debugMode = false, bool usingPool = false)
         {
             this.key = key;
@@ -39,12 +98,15 @@ namespace DotNet2Fox
             this.foxTimeout = foxTimeout;
             this.debugMode = debugMode;
             this.usingPool = usingPool;
-            this.id = Guid.NewGuid().ToString();
-            Debug.WriteLine("Fox constructed: " + key + " " + id);
+            Id = Guid.NewGuid().ToString();
+            Debug.WriteLine("Fox constructed: " + key + " " + Id);
             CreateTimer();
         }
 
-        // Start request (called automatically by FoxPool.GetObject())
+        /// <summary>
+        /// Start request and call FoxApp startup hooks (called automatically by FoxPool.GetObject()).
+        /// </summary>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
         // Initialize FoxRun object before calling other methods
         public void StartRequest(string key)
         {
@@ -56,7 +118,7 @@ namespace DotNet2Fox
                 requestRunning = true;
                 // Reset disposal 
                 disposedValue = false;
-                Debug.WriteLine("StartRequest(): " + id);
+                Debug.WriteLine("StartRequest(): " + Id);
                 // Make sure app started for current key
                 StartApp(key);
                 // Create FoxRun
@@ -65,8 +127,12 @@ namespace DotNet2Fox
             }
         }
 
-        // Start request async (called automatically by FoxPool.GetObjectAsync())
-        // Same as StartRequest() except it calls StartAppAsync() and async hook
+        /// <summary>
+        /// Start request and call FoxApp async startup hooks (called automatically by FoxPool.GetObjectAsync()).
+        /// </summary>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
+        /// <returns></returns>
+        // Same as StartRequest() except it calls StartAppAsync() and async hooks
         public async Task StartRequestAsync(string key)
         {
             // Lock to make sure previous request is completely disposed before starting new request
@@ -77,7 +143,7 @@ namespace DotNet2Fox
                 requestRunning = true;
                 // Reset disposal 
                 disposedValue = false;
-                Debug.WriteLine("StartRequest(): " + id);
+                Debug.WriteLine("StartRequest(): " + Id);
             }
             // await cannot be inside lock, so moved the rest of the code outside
             // Make sure app started for current key
@@ -87,15 +153,18 @@ namespace DotNet2Fox
             await CallFoxAppHookAsync("StartRequest", key);
         }
 
-        // Start application
-        // Runs first time or when key changes
+        /// <summary>
+        /// Start application and call StartApp hook. 
+        /// Runs first time or when key changes.
+        /// </summary>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
         private void StartApp(string key)
         {
             try
             {
                 if (foxCOM == null || this.key != key)
                 {
-                    Debug.WriteLine("StartApp(): " + id);
+                    Debug.WriteLine("StartApp(): " + Id);
                     this.key = key;
                     InstantiateFoxCOM();
                     InstantiateFoxRun();
@@ -114,7 +183,11 @@ namespace DotNet2Fox
             }
         }
 
-        // Start application (async)
+        /// <summary>
+        /// Start application and call StartAppAsync hook. 
+        /// </summary>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
+        /// <returns></returns>
         // Same as StartApp() but calls async hook
         private async Task StartAppAsync(string key)
         {
@@ -122,7 +195,7 @@ namespace DotNet2Fox
             {
                 if (foxCOM == null || this.key != key)
                 {
-                    Debug.WriteLine("StartApp(): " + id);
+                    Debug.WriteLine("StartApp(): " + Id);
                     this.key = key;
                     InstantiateFoxCOM();
                     InstantiateFoxRun();
@@ -141,7 +214,12 @@ namespace DotNet2Fox
             }
         }
 
-        // Call app-specific code
+
+        /// <summary>
+        /// Call app-specific code in FoxApp object.
+        /// </summary>
+        /// <param name="hookName">Name of hook to call.</param>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
         private void CallFoxAppHook(string hookName, string key)
         {
             if (foxApp != null)
@@ -183,7 +261,12 @@ namespace DotNet2Fox
             }
         }
 
-        // Call app-specific code (async)
+        /// <summary>
+        /// Call app-specific code in FoxApp object (async).
+        /// Only Start* hooks can be called asynchronously.
+        /// </summary>
+        /// <param name="hookName">Name of hook to call.</param>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
         private async Task CallFoxAppHookAsync(string hookName, string key)
         {
             if (foxApp != null)
@@ -218,7 +301,10 @@ namespace DotNet2Fox
             }
         }
 
-        // Execute single FoxPro command
+        /// <summary>
+        /// Execute single Visual FoxPro command.
+        /// </summary>
+        /// <param name="command">Specifies the Visual FoxPro command to execute.</param>
         public void DoCmd(string command)
         {
             try
@@ -240,7 +326,10 @@ namespace DotNet2Fox
             }
         }
 
-        // Execute single FoxPro command (async)
+        /// <summary>
+        /// Execute single Visual FoxPro command asynchronously.
+        /// </summary>
+        /// <param name="command">Specifies the Visual FoxPro command to execute.</param>
         public async Task<dynamic> DoCmdAsync(string command)
         {
             dynamic result;
@@ -258,7 +347,11 @@ namespace DotNet2Fox
             return result;
         }
 
-        // FoxPro Evaluate() function
+        /// <summary>
+        /// Evaluates a Visual FoxPro character expression and returns the result.
+        /// </summary>
+        /// <param name="expression">Specifies the expression to evaluate.</param>
+        /// <returns>Result of expression.</returns>
         public dynamic Eval(string expression)
         {
             dynamic result;
@@ -286,7 +379,11 @@ namespace DotNet2Fox
             return result;
         }
 
-        // FoxPro Evaluate() function (async)
+        /// <summary>
+        /// Evaluates a Visual FoxPro character expression asynchronously and returns the result.
+        /// </summary>
+        /// <param name="expression">Specifies the expression to evaluate.</param>
+        /// <returns>Result of expression.</returns>
         public async Task<dynamic> EvalAsync(string expression)
         {
             dynamic result;
@@ -304,7 +401,12 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Execute/call function
+        /// <summary>
+        /// Calls a Visual FoxPro function and returns the result.
+        /// </summary>
+        /// <param name="functionName">Name of function to execute. Can be a user-defined function, VFP built-in function, or method on existing public object.</param>
+        /// <param name="parameters">Optional. Specify parameters passed to function.</param>
+        /// <returns>Result of function.</returns>
         public dynamic Call(string functionName, params object[] parameters)
         {
             dynamic result;
@@ -332,7 +434,12 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Execute/call function (async)
+        /// <summary>
+        /// Calls a Visual FoxPro function asynchronously and returns the result.
+        /// </summary>
+        /// <param name="functionName">Name of function to execute. Can be a user-defined function, VFP built-in function, or method on existing public object.</param>
+        /// <param name="parameters">Optional. Specify parameters passed to function.</param>
+        /// <returns>Result of function.</returns>
         public async Task<dynamic> CallAsync(string functionName, params object[] parameters)
         {
             dynamic result;
@@ -350,7 +457,15 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Instantiate object, call method on it, and release object
+        /// <summary>
+        /// Instantiate object, call method on it, then release object.
+        /// </summary>
+        /// <param name="methodName">Name of the method to execute.</param>
+        /// <param name="className">Specifies the class or object from which the new class or object is created.</param>
+        /// <param name="module">Specifies a .vcx file or Visual FoxPro program containing the class or object specified with className.</param>
+        /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
+        /// <param name="parameters">Optional. Specifies optional parameters that are passed to the method specified with methodName.</param>
+        /// <returns>Result of method.</returns>
         public dynamic CallMethod(string methodName, string className, string module, string inApplication = "", params object[] parameters)
         {
             dynamic result;
@@ -378,7 +493,15 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Instantiate object, call method on it, and release object (async)
+        /// <summary>
+        /// Instantiate object, call method on it asynchronously, then release object.
+        /// </summary>
+        /// <param name="methodName">Name of the method to execute.</param>
+        /// <param name="className">Specifies the class or object from which the new class or object is created.</param>
+        /// <param name="module">Specifies a .vcx file or Visual FoxPro program containing the class or object specified with className.</param>
+        /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
+        /// <param name="parameters">Optional. Specifies optional parameters that are passed to the method specified with methodName.</param>
+        /// <returns>Result of method.</returns>
         public async Task<dynamic> CallMethodAsync(string methodName, string className, string module, string inApplication = "", params object[] parameters)
         {
             dynamic result;
@@ -396,7 +519,14 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Instantiate FoxPro object using NewObject()
+        /// <summary>
+        /// Instantiate Visual FoxPro object using NewObject().
+        /// </summary>
+        /// <param name="className">Specifies the class or object from which the new class or object is created.</param>
+        /// <param name="module">Specifies a .vcx file or Visual FoxPro program containing the class or object specified with className.</param>
+        /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
+        /// <param name="parameters">Optional. Specifies optional parameters that are passed to the Init event procedure for the class or object.</param>
+        /// <returns>Visual FoxPro object.</returns>
         public dynamic CreateNewObject(string className, string module, string inApplication="", params object[] parameters)
         {
             dynamic result;
@@ -424,7 +554,14 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Instantiate FoxPro object using NewObject() (async).
+        /// <summary>
+        /// Instantiate Visual FoxPro object asynchronously using NewObject().
+        /// </summary>
+        /// <param name="className">Specifies the class or object from which the new class or object is created.</param>
+        /// <param name="module">Specifies a .vcx file or Visual FoxPro program containing the class or object specified with className.</param>
+        /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
+        /// <param name="parameters">Optional. Specifies optional parameters that are passed to the Init event procedure for the class or object.</param>
+        /// <returns>Visual FoxPro object.</returns>
         public async Task<dynamic> CreateNewObjectAsync(string className, string module, string inApplication = "", params object[] parameters)
         {
             dynamic result;
@@ -442,7 +579,14 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Do program. The DO command does not have a return value.  Use Call() instead if a return value is required.
+
+        /// <summary>
+        /// Executes a Visual FoxPro program or procedure. 
+        /// The DO command does not return a value.  Use Call() instead if a return value is required.
+        /// </summary>
+        /// <param name="program">Specifies the name of the program to execute.</param>
+        /// <param name="inProgram">Optional. Executes a procedure in the program file specified with ProgramName2.</param>
+        /// <param name="parameters">Optional. Specifies parameters to pass to the program or procedure.</param>
         public void Do(string program, string inProgram = "", params object[] parameters)
         {
             try
@@ -465,7 +609,14 @@ namespace DotNet2Fox
 
         }
 
-        // Do program. The DO command does not have a return value.  Use Call() instead if a return value is required.
+        /// <summary>
+        /// Executes a Visual FoxPro program or procedure asynchronously. 
+        /// The DO command does not return a value.  Use Call() instead if a return value is required.
+        /// </summary>
+        /// <param name="program">Specifies the name of the program to execute.</param>
+        /// <param name="inProgram">Optional. Executes a procedure in the program file specified with ProgramName2.</param>
+        /// <param name="parameters">Optional. Specifies parameters to pass to the program or procedure.</param>
+
         public async Task DoAsync(string program, string inProgram = "", params object[] parameters)
         {
             var tcs = new TaskCompletionSourceWrapper();
@@ -482,7 +633,12 @@ namespace DotNet2Fox
 
         }
 
-        // Execute FoxPro script
+        /// <summary>
+        /// Enables you to run multiple lines of code from variables, tables, and other text at runtime.
+        /// </summary>
+        /// <param name="script">Represents the text, a variable, type string, or memo to be executed as code.</param>
+        /// <param name="parameters">Optional. Specify parameters passed to a script that has a parameter statement in first line.</param>
+        /// <returns>Value returned by the script.</returns>
         public dynamic ExecScript(string script, params object[] parameters)
         {
             dynamic result;
@@ -509,7 +665,12 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Execute FoxPro script (async)
+        /// <summary>
+        /// Enables you to asynchronously run multiple lines of code from variables, tables, and other text at runtime.
+        /// </summary>
+        /// <param name="script">Represents the text, a variable, type string, or memo to be executed as code.</param>
+        /// <param name="parameters">Optional. Specify parameters passed to a script that has a parameter statement in first line.</param>
+        /// <returns>Value returned by the script.</returns>
         public async Task<dynamic> ExecScriptAsync(string script, params object[] parameters)
         {
             dynamic result;
@@ -527,8 +688,14 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Call method on existing FoxPro object
-        // Usually no need to use directly, but could be useful calling from extension methods
+        /// <summary>
+        /// Call method on existing FoxPro object.
+        /// Usually no need to use directly, but could be useful calling from extension methods.
+        /// </summary>
+        /// <param name="foxObject">Existing FoxPro object containing method to call.</param>
+        /// <param name="methodName">Name of method to execute.</param>
+        /// <param name="parameters">Optional. Specifies optional parameters that are passed to the method specified with methodName.</param>
+        /// <returns>Result of method.</returns>
         public dynamic CallObjectMethod(dynamic foxObject, string methodName, params object[] parameters)
         {
             dynamic result;
@@ -544,7 +711,13 @@ namespace DotNet2Fox
             return result;
         }
 
-        // Call method on existing FoxPro object (async)
+        /// <summary>
+        /// Call method on existing FoxPro object asynchronously.
+        /// </summary>
+        /// <param name="foxObject">Existing FoxPro object containing method to call.</param>
+        /// <param name="methodName">Name of method to execute.</param>
+        /// <param name="parameters">Optional. Specifies optional parameters that are passed to the method specified with methodName.</param>
+        /// <returns>Result of method.</returns>
         public async Task<dynamic> CallObjectMethodAsync(dynamic foxObject, string methodName, params object[] parameters)
         {
             dynamic result;
@@ -594,7 +767,9 @@ namespace DotNet2Fox
             Marshal.ReleaseComObject(comObject);
         }
 
-        // Setup timer
+        /// <summary>
+        /// Create timer that releases object from pool after period of inactivity.
+        /// </summary>
         private void CreateTimer()
         {
             foxTimer = new Timer();
@@ -603,11 +778,15 @@ namespace DotNet2Fox
             foxTimer.Elapsed += OnTimerElapsed;
         }
 
-        // Fires when timer elapses
+        /// <summary>
+        /// Fires when foxTimer elapses. Releases FoxPro COM object.
+        /// </summary>
+        /// <param name="source">Event source.</param>
+        /// <param name="e">Event arguments.</param>
         private void OnTimerElapsed(Object source, System.Timers.ElapsedEventArgs e)
         {
             // Release FoxPro COM object
-            Debug.WriteLine("OnTimerElapsed(): " + id);
+            Debug.WriteLine("OnTimerElapsed(): " + Id);
             lock (requestLock)
             {
                 if (!requestRunning)
@@ -617,14 +796,16 @@ namespace DotNet2Fox
             }
         }
 
-        // Instantiate FoxPro generic COM object
+        /// <summary>
+        /// Instantiate FoxPro generic COM object 
+        /// </summary>
         private void InstantiateFoxCOM()
         {
             try
             {
                 if (foxCOM == null)
                 {
-                    Debug.WriteLine("InstantiateFoxCOM(): " + id);
+                    Debug.WriteLine("InstantiateFoxCOM(): " + Id);
                     if (debugMode == true)
                     {
                         dynamic vfp = Activator.CreateInstance(Type.GetTypeFromProgID("VisualFoxPro.Application", true));
@@ -663,9 +844,11 @@ namespace DotNet2Fox
             }
         }
 
-        // Make sure foxCOM object is ok
-        // Otherwise, errors will occur if VFP instance crashes or is closed and Fox object thinks it is still open
-        // Optionally reinstantiate if there is a problem
+        /// <summary>
+        /// Make sure FoxCOM object is ok.
+        /// Otherwise, errors will occur if VFP instance crashes or is closed and Fox object thinks it is still open.
+        /// </summary>
+        /// <param name="reinstantiate">Optional. Reinstantiate FoxCOM if there is a problem.</param>
         private void CheckFoxCOM(bool reinstantiate = false)
         {
             bool foxCOMOK;
@@ -697,7 +880,9 @@ namespace DotNet2Fox
             }
         }
 
-        // Instantiate FoxRun object
+        /// <summary>
+        /// Instantiate FoxRun object 
+        /// </summary>
         private void InstantiateFoxRun()
         {
             // FoxRun is object used to run FoxPro/Nexus commands
@@ -706,7 +891,7 @@ namespace DotNet2Fox
             {
                 if (foxRun == null)
                 {
-                    Debug.WriteLine("InstantiateFoxRun(): " + id);
+                    Debug.WriteLine("InstantiateFoxRun(): " + Id);
                     dynamic _VFP;
                     string foxRunVCX = "foxrun.vcx";
                     if (debugMode == true)
@@ -743,9 +928,11 @@ namespace DotNet2Fox
             }
         }
 
-        // Make sure foxCOM object is ok
-        // Otherwise, errors will occur if VFP instance crashes or is closed and Fox object thinks it is still open
-        // Optionally reinstantiate if there is a problem
+        /// <summary>
+        /// Make sure FoxRun object is ok.
+        /// Otherwise, errors will occur if VFP instance crashes or is closed and Fox object thinks it is still open.
+        /// </summary>
+        /// <param name="reinstantiate">Optional. Reinstantiate FoxRun if there is a problem</param>
         private void CheckFoxRun(bool reinstantiate = false) 
         {
             bool foxRunOK;
@@ -776,16 +963,21 @@ namespace DotNet2Fox
             }
         }
 
+        /// <summary>
+        /// Handle error that raised while executing FoxPro code.
+        /// </summary>
+        /// <param name="ex">Exception raised from FoxPro.</param>
+        /// <param name="retryCount">Optional. Number of times to retry operation that caused error. Sets retryAfterError to true if operation can be retried.</param>
         public void HandleError(Exception ex, int retryCount = 0)
         {
-            Debug.WriteLine("HandleError(): " + id + ex.ToString());
+            Debug.WriteLine("HandleError(): " + Id + ex.ToString());
             retryAfterError = false;
             CheckFoxRun();
             if (ex is NullReferenceException && foxRun != null)
             {
                 // Throw FoxPro error
                 string error = foxRun.GetErrorMessage();
-                Debug.WriteLine("foxRun.GetErrorMessage(): " + id + "\n" + error);
+                Debug.WriteLine("foxRun.GetErrorMessage(): " + Id + "\n" + error);
                 // Dispose object and don't return to pool
                 usingPool = false;
                 Dispose();
@@ -797,7 +989,7 @@ namespace DotNet2Fox
                 // For COM failures, allow a limited number of retries per request
                 retries++;
                 retryAfterError = true;
-                Debug.WriteLine("HandleError() Retry " + retries.ToString() + ": " + id);
+                Debug.WriteLine("HandleError() Retry " + retries.ToString() + ": " + Id);
             }
             else
             {
@@ -805,9 +997,13 @@ namespace DotNet2Fox
             }
         }
 
+        /// <summary>
+        /// Released FoxCOM object.
+        /// </summary>
+        /// <param name="reason">Reason object is being released. Used for DotNet2Fox internal debugging.</param>
         private void ReleaseFoxCOM(string reason)
         {
-            Debug.WriteLine("ReleaseFoxCOM(): " + key + " " + id + " " + reason);
+            Debug.WriteLine("ReleaseFoxCOM(): " + key + " " + Id + " " + reason);
             foxTimer.Stop();
             //CheckFoxCOM();
             try
@@ -831,7 +1027,7 @@ namespace DotNet2Fox
             }
             finally
             {
-                Debug.WriteLine("Marshal.ReleaseComObject(foxCOM): " + key + " " + id + " " + reason);
+                Debug.WriteLine("Marshal.ReleaseComObject(foxCOM): " + key + " " + Id + " " + reason);
                 try
                 {
                     if (foxCOM != null) // double-check
@@ -849,9 +1045,12 @@ namespace DotNet2Fox
             }
         }
 
+        /// <summary>
+        /// Released FoxRun object.
+        /// </summary>
         private void ReleaseFoxRun()
         {
-            Debug.WriteLine("ReleaseFoxRun(): " + id);
+            Debug.WriteLine("ReleaseFoxRun(): " + Id);
             //CheckFoxRun();
             try
             {
@@ -871,7 +1070,7 @@ namespace DotNet2Fox
             }
             finally
             {
-                Debug.WriteLine("Marshal.ReleaseComObject(foxRun): " + id);
+                Debug.WriteLine("Marshal.ReleaseComObject(foxRun): " + Id);
                 retries = 0;   // reset retries count
                 try
                 {
@@ -898,15 +1097,18 @@ namespace DotNet2Fox
                 catch
                 {
                     // Ignore errors when releasing
-                    Debug.WriteLine("Marshal.ReleaseComObject(foxRun) Error: " + id);
+                    Debug.WriteLine("Marshal.ReleaseComObject(foxRun) Error: " + Id);
                 }
-                Debug.WriteLine("ReleaseFoxRun() Complete: " + id);
+                Debug.WriteLine("ReleaseFoxRun() Complete: " + Id);
             }
         }
 
+        /// <summary>
+        /// Release any Visual FoxPro COM object references.
+        /// </summary>
         private void CleanupComObjects()
         {
-            Debug.WriteLine("GC Cleanup: " + id);
+            Debug.WriteLine("GC Cleanup: " + Id);
             // Release any COM objects created by FoxRun (CreateNewObject(), etc.)
             // See https://stackoverflow.com/questions/37904483/as-of-today-what-is-the-right-way-to-work-with-com-objects
             do
@@ -916,15 +1118,19 @@ namespace DotNet2Fox
                 GC.WaitForPendingFinalizers();
             }
             while (Marshal.AreComObjectsAvailableForCleanup());
-            Debug.WriteLine("GC Cleanup Complete: " + id);
+            Debug.WriteLine("GC Cleanup Complete: " + Id);
         }
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
+        /// <summary>
+        /// Release Fox object or return to pool.
+        /// </summary>
+        /// <param name="disposing"></param>
         protected virtual void Dispose(bool disposing)
         {
-            Debug.WriteLine(key + ": Dispose : " + disposing.ToString() + "  " + disposedValue.ToString() + " " + "usingPool: " + usingPool.ToString() + " " + id);
+            Debug.WriteLine(key + ": Dispose : " + disposing.ToString() + "  " + disposedValue.ToString() + " " + "usingPool: " + usingPool.ToString() + " " + Id);
             if (!disposedValue)
             {
                 disposedValue = true;
@@ -953,7 +1159,7 @@ namespace DotNet2Fox
                         else
                         {
                             // Object not in pool so release it
-                            FoxPool.instCount--;
+                            FoxPool.instanceCount--;
                             foxTimer.Stop();
                             usingPool = false;
                             ReleaseFoxCOM("Not added to pool");
@@ -987,7 +1193,7 @@ namespace DotNet2Fox
         // Finalizer in case Dispose not called by user
         ~Fox()
         {
-            Debug.WriteLine(key + ": Fox destructor " + id);
+            Debug.WriteLine(key + ": Fox destructor " + Id);
             usingPool = false;
             Dispose(false);
         }
