@@ -564,12 +564,27 @@ namespace DotNet2Fox
 
         /// <summary>
         /// Set Step On before the next call using Fox object.
+        /// Only applicable in debugMode.
         /// </summary>
         public void SetStepOn()
         {
             if (debugMode)
             {
                 foxRun.SetStepOn();
+            }
+        }
+
+        /// <summary>
+        /// Set breakpoint in specified file/location.
+        /// Only applicable in debug mode.
+        /// </summary>
+        /// <param name="fileName">File to set breakpoint in.</param>
+        /// <param name="location">Breakpoint location. Use same format as VFP Breakpoints dialog.</param>
+        public void SetBreakpoint(string fileName, string location)
+        {
+            if (debugMode)
+            {
+                foxRun.SetBreakpoint(fileName, location);
             }
         }
 

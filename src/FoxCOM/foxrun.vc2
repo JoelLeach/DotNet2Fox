@@ -61,6 +61,7 @@ DEFINE CLASS foxrun AS custom
 		*m: processasynccommand		&& Process async command.
 		*m: setasynccommand		&& Setup async command and timer to execute it.
 		*m: setasyncexception		&& Set exception in .NET Task Completion Source.
+		*m: setbreakpoint		&& Set breakpoint in specified file/location.
 		*m: setprivatedatasession		&& Set up private data session for object.
 		*m: setstepon		&& SET STEP ON before next call.
 		*p: lquitondestroy		&& When set to .T., will Quit FoxPro when object is destroyed.
@@ -111,6 +112,7 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="callobjectmethod" display="CallObjectMethod"/>
 		<memberdata name="lsetstepon" display="lSetStepOn"/>
 		<memberdata name="setstepon" display="SetStepOn"/>
+		<memberdata name="setbreakpoint" display="SetBreakpoint"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -561,6 +563,18 @@ DEFINE CLASS foxrun AS custom
 			This.oTaskCompletionSource = NULL
 			This.oAsyncCommand = NULL
 			loTaskCompletionSource.SetException()
+		EndIf 
+	ENDPROC
+
+	PROCEDURE setbreakpoint		&& Set breakpoint in specified file/location.
+		* Set breakpoint in specified file/location
+		* Location should be in same format as VFP Breakpoints dialog
+		Lparameters lcFilename, lcLocation
+		
+		If _VFP.StartMode = 1
+			* No way to programmatically set breakpoint, so populates Breakpoints dialog using keyboard commands
+			* {CTRL+B} is hotkey to open Breakpoints dialog
+			Keyboard Textmerge("{CTRL+B}<<lcLocation>>{TAB}<<lcFilename>>{ENTER}{ENTER}")
 		EndIf 
 	ENDPROC
 
