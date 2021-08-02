@@ -894,11 +894,19 @@ namespace DotNet2Fox
                     Debug.WriteLine("InstantiateFoxRun(): " + Id);
                     dynamic _VFP;
                     string foxRunVCX = "foxrun.vcx";
+                    string foxCOMEXE = "";
                     if (debugMode == true)
                     {
                         // In debug mode, _VFP is the same as foxCOM
                         _VFP = foxCOM.VFP;
                         foxRunVCX = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM\FoxRun.vcx";
+                        // Source files are only deployed for Debug builds.
+                        // For Release builds, FoxCOM.exe will be deployed and can be used in DotNet2Fox debug mode.
+                        // Useful for running unit tests with Release builds.
+                        if (!File.Exists(foxRunVCX))
+                        {
+                            foxCOMEXE = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM\FoxCOM.exe";
+                        }
                     }
                     else
                     {
@@ -906,7 +914,7 @@ namespace DotNet2Fox
                         _VFP = foxCOM.VFP;
                     }
 
-                    string cmd = "NewObject('foxrun','" + foxRunVCX + "')";
+                    string cmd = $"NewObject('foxrun','{foxRunVCX}', '{foxCOMEXE}')";
                     foxRun = _VFP.Eval(cmd);
                     foxRun.lQuitOnDestroy = false;
                 }
