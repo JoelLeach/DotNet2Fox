@@ -108,7 +108,22 @@ namespace DotNet2Fox
                         fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
                         break;
                     }
-                    else
+                    else if (instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
+                    {
+                        // If all instance slots used, but there is one available in pool with a different key,
+                        //  steal its slot, even though we're not recycling keys
+                        fox = GetObjectFromPool();
+                        if (fox != null)
+                        {
+                            Debug.WriteLine("Stealing pool slot from a different key: " + key);
+                            fox.RemoveFromPool();
+                            IFoxApp foxApp = CreateFoxAppObject();
+                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
+                            break;
+                        }
+                    }
+
+                    if (fox == null)
                     {
                         // All instances are created and busy, so wait for one to become available
                         Thread.Sleep(50);
@@ -164,7 +179,22 @@ namespace DotNet2Fox
                         fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
                         break;
                     }
-                    else
+                    else if (instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
+                    {
+                        // If all instance slots used, but there is one available in pool with a different key,
+                        //  steal its slot, even though we're not recycling keys
+                        fox = GetObjectFromPool();
+                        if (fox != null)
+                        {
+                            Debug.WriteLine("Stealing pool slot from a different key: " + key);
+                            fox.RemoveFromPool();
+                            IFoxApp foxApp = CreateFoxAppObject();
+                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
+                            break;
+                        }
+                    }
+
+                    if (fox == null)
                     {
                         // All instances are created and busy, so wait for one to become available
                         await Task.Delay(50);
@@ -250,14 +280,14 @@ namespace DotNet2Fox
                 poolEnabled = false;
 
                 // Clear pool and dispose objects
-                Fox item;
+                Fox fox;
                 foreach (var key in pool.Keys)
                 {
-                    if (pool.TryRemove(key, out item))
+                    if (pool.TryRemove(key, out fox))
                     {
                         try
                         {
-                            item.Dispose();
+                            fox.Dispose();
                         }
                         catch (Exception)
                         {

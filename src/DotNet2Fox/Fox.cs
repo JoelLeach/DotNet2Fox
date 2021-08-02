@@ -987,8 +987,7 @@ namespace DotNet2Fox
                 string error = foxRun.GetErrorMessage();
                 Debug.WriteLine("foxRun.GetErrorMessage(): " + Id + "\n" + error);
                 // Dispose object and don't return to pool
-                usingPool = false;
-                Dispose();
+                RemoveFromPool();
                 throw new COMException(error);
             }
             else if (retries < retryCount && (ex is COMException || ex is MissingMemberException || 
@@ -1003,6 +1002,15 @@ namespace DotNet2Fox
             {
                 throw ex;
             }
+        }
+
+        /// <summary>
+        /// Dispose Fox object and don't return to pool
+        /// </summary>
+        public void RemoveFromPool()
+        {
+            usingPool = false;
+            Dispose();
         }
 
         /// <summary>

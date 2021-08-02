@@ -303,5 +303,66 @@ namespace DotNet2Fox.Tests
             Console.WriteLine($"Time per call: {msPerCall} ms");
             FoxPool.ClearPool();
         }
+
+        [TestMethod()]
+        public void PoolStealSlotTest()
+        {
+            FoxPool.DebugMode = true;
+            FoxPool.RecycleOtherKeys = false;
+            int poolSize = FoxPool.PoolSize;
+            try
+            {
+                FoxPool.PoolSize = 1;
+                using (Fox fox = FoxPool.GetObject("PoolKey1"))
+                {
+                    var result = fox.Eval("1+1");
+                    Assert.AreEqual(result, 2);
+                }
+                // Pool is already full with PoolKey1.
+                // Since it is currently in pool doing nothing, steal its slot instead of waiting.
+                // Debug into GetObject() to check if it is working or look for "Stealing pool slot" in debug log.
+                using (Fox fox = FoxPool.GetObject("PoolKey2"))
+                {
+                    var result = fox.Eval("1+1");
+                    Assert.AreEqual(result, 2);
+                }
+            }
+            finally
+            {
+                FoxPool.PoolSize = poolSize;
+                FoxPool.ClearPool();
+            }
+        }
+
+        [TestMethod()]
+        public async Task PoolStealSlotTestAsync()
+        {
+            FoxPool.DebugMode = true;
+            FoxPool.RecycleOtherKeys = false;
+            int poolSize = FoxPool.PoolSize;
+            try
+            {
+                FoxPool.PoolSize = 1;
+                using (Fox fox = await FoxPool.GetObjectAsync("PoolKey1"))
+                {
+                    var result = fox.Eval("1+1");
+                    Assert.AreEqual(result, 2);
+                }
+                // Pool is already full with PoolKey1.
+                // Since it is currently in pool doing nothing, steal its slot instead of waiting.
+                // Debug into GetObjectAsync() to check if it is working or look for "Stealing pool slot" in debug log.
+                using (Fox fox = await FoxPool.GetObjectAsync("PoolKey2"))
+                {
+                    var result = fox.Eval("1+1");
+                    Assert.AreEqual(result, 2);
+                }
+            }
+            finally
+            {
+                FoxPool.PoolSize = poolSize;
+                FoxPool.ClearPool();
+            }
+        }
+
     }
 }
