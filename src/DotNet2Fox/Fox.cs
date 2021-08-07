@@ -761,9 +761,16 @@ namespace DotNet2Fox
             }
         }
 
-        // Release COM object reference to FoxPro object.
+        /// <summary>
+        /// Release COM object reference to FoxPro object.
+        /// </summary>
+        /// <param name="comObject">COM object reference to release.</param>
         public void ReleaseComObject(object comObject)
         {
+#if NET5_0_OR_GREATER
+            // For .NET 5.0, indicate this only runs on Windows to prevent warning    
+            Debug.Assert(OperatingSystem.IsWindows());
+#endif
             Marshal.ReleaseComObject(comObject);
         }
 
@@ -811,6 +818,15 @@ namespace DotNet2Fox
                         dynamic vfp = Activator.CreateInstance(Type.GetTypeFromProgID("VisualFoxPro.Application", true));
                         vfp.Visible = true;
                         string foxCOMPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM\FoxCOM.prg";
+                        // Source files are only deployed for Debug builds.
+                        // For Release builds, FoxCOM.exe will be deployed and can be used in DotNet2Fox debug mode.
+                        // Useful for running unit tests with Release builds.
+                        string foxCOMEXE = "";
+                        if (!File.Exists(foxCOMPath))
+                        {
+                            foxCOMEXE = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";
+                            vfp.DoCmd($"Set Procedure To '{foxCOMEXE}' Additive");
+                        }
                         string cmd = $"NewObject('Application', '{foxCOMPath}')";
                         foxCOM = vfp.Eval(cmd);
                         foxCOM.lQuitOnDestroy = true;
@@ -905,7 +921,7 @@ namespace DotNet2Fox
                         // Useful for running unit tests with Release builds.
                         if (!File.Exists(foxRunVCX))
                         {
-                            foxCOMEXE = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM\FoxCOM.exe";
+                            foxCOMEXE = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";
                         }
                     }
                     else
@@ -1137,7 +1153,7 @@ namespace DotNet2Fox
             Debug.WriteLine("GC Cleanup Complete: " + Id);
         }
 
-        #region IDisposable Support
+#region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
         /// <summary>
@@ -1204,7 +1220,7 @@ namespace DotNet2Fox
             //    GC.SuppressFinalize(this);
             //}
         }
-        #endregion
+#endregion
 
         // Finalizer in case Dispose not called by user
         ~Fox()

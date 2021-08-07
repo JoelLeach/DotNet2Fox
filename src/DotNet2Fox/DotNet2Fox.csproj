@@ -8,28 +8,30 @@
     <SccProvider>SAK</SccProvider>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Authors>Joel Leach</Authors>
+    <Description>Simplify calling Visual FoxPro code from .NET via COM interop.</Description>
     <PackageProjectUrl>https://github.com/JoelLeach/DotNet2Fox</PackageProjectUrl>
     <RepositoryUrl></RepositoryUrl>
   </PropertyGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
     <None Include="..\FoxCOM\foxcom.prg">
       <Link>FoxCOM\foxcom.prg</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\FoxCOM\foxrun.vct">
       <Link>FoxCOM\foxrun.vct</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\FoxCOM\foxrun.vcx">
       <Link>FoxCOM\foxrun.vcx</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\FoxCOM\foxcom.exe">
-      <Link>FoxCOM\foxcom.exe</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <Content Include="..\FoxCOM\foxcom.exe">
+      <Link>foxcom.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
