@@ -36,4 +36,15 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="nuget\" />
+    <Content Include="nuget\Init.ps1">
+      <Pack>true</Pack>
+      <PackagePath>tools\</PackagePath>
+    </Content>
+    <Content Include="nuget\RegisterFoxCOM.cmd">
+      <Pack>true</Pack>
+      <PackagePath>tools\</PackagePath>
+    </Content>
+  </ItemGroup>
 </Project>

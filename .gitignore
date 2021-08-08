@@ -5,6 +5,8 @@
 *.fxp
 *.bak
 *.vbr
+FOXUSER.DBF
+FOXUSER.FPT
 
 # User-specific files
 *.suo
@@ -255,3 +257,4 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
