@@ -56,7 +56,6 @@ DEFINE CLASS foxrun AS custom
 		*m: evalasync		&& Evaluate expression (async).
 		*m: execscript		&& Execute script.
 		*m: execscriptasync		&& Execute script (async).
-		*m: factory		&& Create and return object using abstract factory.
 		*m: geterrormessage		&& Get last recorded error.  Requires error handler in Fox app to set _Screen.cErrorMessage.
 		*m: processasynccommand		&& Process async command.
 		*m: setasynccommand		&& Setup async command and timer to execute it.
@@ -90,7 +89,6 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="eval" display="Eval"/>
 		<memberdata name="execscript" display="ExecScript"/>
 		<memberdata name="createnewobject" display="CreateNewObject"/>
-		<memberdata name="factory" display="Factory"/>
 		<memberdata name="lquitondestroy" display="lQuitOnDestroy"/>
 		<memberdata name="geterrormessage" display="GetErrorMessage"/>
 		<memberdata name="osession" display="oSession"/>
@@ -423,21 +421,6 @@ DEFINE CLASS foxrun AS custom
 		
 		This.SetAsyncCommand("EXECSCRIPT", loTaskCompletionSource, lcScript,,,, @laParameters)
 		
-	ENDPROC
-
-	PROCEDURE factory		&& Create and return object using abstract factory.
-		* Create and return object using abstract factory.
-		Lparameters lcFactoryKey, laParameters
-		Local lcParameterClause
-			
-		lcParameterClause = This.CreateParameterClause(@laParameters)
-		If !Empty(lcParameterClause)
-			Debugout Time(0), Program(), lcParameterClause 
-			Return Factory(lcFactoryKey, &lcParameterClause)
-		Else
-			Debugout Time(0), Program()
-			Return Factory(lcFactoryKey)
-		EndIf 
 	ENDPROC
 
 	PROCEDURE geterrormessage		&& Get last recorded error.  Requires error handler in Fox app to set _Screen.cErrorMessage.
