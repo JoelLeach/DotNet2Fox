@@ -4,7 +4,7 @@ Local loErr as Exception
 Try 
 	Error "Fox Test Error"
 Catch to loErr
-	_Screen.cErrorMessage = loErr.Message
+	_Screen.cTestErrorMessage = loErr.Message
 	If _VFP.StartMode = 2	&& COM EXE
 		ComReturnError("FoxPro", "FoxPro Error")
 	Else	&& debug mode

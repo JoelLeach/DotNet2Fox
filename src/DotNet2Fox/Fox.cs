@@ -49,6 +49,12 @@ namespace DotNet2Fox
         /// </summary>
         private bool usingPool;
         /// <summary>
+        /// Name of the global FoxPro Object.Property that contains the latest error message. 
+        /// It must be a property on a global object. A global string variable is not sufficient.
+        /// Default: "_Screen.cErrorMessage"
+        /// </summary>
+        private string errorPropertyName;
+        /// <summary>
         /// Lock to make sure previous request is completely disposed before starting new request.
         /// </summary>
         private readonly object requestLock = new object();
@@ -91,13 +97,21 @@ namespace DotNet2Fox
         /// <param name="foxTimeout">Seconds of inactivity before foxCOM object is released.</param>
         /// <param name="debugMode">When true, commands are executed within Visual FoxPro IDE capable of debugging.</param>
         /// <param name="usingPool">When true, Fox object is used within pool.</param>
-        public Fox(string key, IFoxApp foxApp = null, int foxTimeout = 60, bool debugMode = false, bool usingPool = false)
+        /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
+        /// It must be a property on a global object. A global string variable is not sufficient.</param>
+        public Fox(string key,
+            IFoxApp foxApp = null,
+            int foxTimeout = 60,
+            bool debugMode = false,
+            bool usingPool = false,
+            string errorPropertyName = "_Screen.cErrorMessage")
         {
             this.key = key;
             this.foxApp = foxApp;
             this.foxTimeout = foxTimeout;
             this.debugMode = debugMode;
             this.usingPool = usingPool;
+            this.errorPropertyName = errorPropertyName;
             Id = Guid.NewGuid().ToString();
             Debug.WriteLine("Fox constructed: " + key + " " + Id);
             CreateTimer();
@@ -933,6 +947,10 @@ namespace DotNet2Fox
                     string cmd = $"NewObject('foxrun','{foxRunVCX}', '{foxCOMEXE}')";
                     foxRun = _VFP.Eval(cmd);
                     foxRun.lQuitOnDestroy = false;
+                    if (!string.IsNullOrWhiteSpace(errorPropertyName))
+                    {
+                        foxRun.SetErrorProperty(errorPropertyName);
+                    }
                 }
             }
             catch (Exception ex)

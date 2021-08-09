@@ -61,8 +61,10 @@ DEFINE CLASS foxrun AS custom
 		*m: setasynccommand		&& Setup async command and timer to execute it.
 		*m: setasyncexception		&& Set exception in .NET Task Completion Source.
 		*m: setbreakpoint		&& Set breakpoint in specified file/location.
+		*m: seterrorproperty		&& Set global Object.Property that contains the error message reported by GetErrorMessage(). It must be a property on a global object. A global variable is not sufficient.
 		*m: setprivatedatasession		&& Set up private data session for object.
 		*m: setstepon		&& SET STEP ON before next call.
+		*p: cerrorproperty		&& Name of the global Object.Property that contains the error message reported by GetErrorMessage(). It must be a property on a global object. A global variable is not sufficient.
 		*p: lquitondestroy		&& When set to .T., will Quit FoxPro when object is destroyed.
 		*p: lsetstepon		&& When .T., will SET STEP ON before next call.
 		*p: oasynccommand		&& Async command to execute.
@@ -72,7 +74,8 @@ DEFINE CLASS foxrun AS custom
 		*p: _memberdata		&& XML Metadata for customizable properties
 	*</DefinedPropArrayMethod>
 
-	PROTECTED lsetstepon,oasynccommand,oasynctimer,otaskcompletionsource
+	PROTECTED cerrorproperty,lsetstepon,oasynccommand,oasynctimer,otaskcompletionsource
+	cerrorproperty = _Screen.cErrorMessage		&& Name of the global Object.Property that contains the error message reported by GetErrorMessage(). It must be a property on a global object. A global variable is not sufficient.
 	lquitondestroy = .F.		&& When set to .T., will Quit FoxPro when object is destroyed.
 	lsetstepon = .F.		&& When .T., will SET STEP ON before next call.
 	Name = "foxrun"
@@ -111,6 +114,8 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="lsetstepon" display="lSetStepOn"/>
 		<memberdata name="setstepon" display="SetStepOn"/>
 		<memberdata name="setbreakpoint" display="SetBreakpoint"/>
+		<memberdata name="cerrorproperty" display="cErrorProperty"/>
+		<memberdata name="seterrorproperty" display="SetErrorProperty"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -425,14 +430,15 @@ DEFINE CLASS foxrun AS custom
 
 	PROCEDURE geterrormessage		&& Get last recorded error.  Requires error handler in Fox app to set _Screen.cErrorMessage.
 		* Get last recorded error.  
-		* Requires error handler in Fox app to set _Screen.cErrorMessage.
-		Local lcErrorMessage
+		* Requires error handler in Fox app to set property specified in This.cErrorProperty (_Screen.cErrorMessage by default).
+		Local lcErrorMessage, lcErrorProperty
 		
 		lcErrorMessage = ""
-		If Type("_Screen.cErrorMessage") = "C"
-			lcErrorMessage = _Screen.cErrorMessage
+		lcErrorProperty = This.cErrorProperty
+		If Type(lcErrorProperty) = "C"
+			lcErrorMessage = Evaluate(lcErrorProperty)
 			* Reset error message
-			_Screen.cErrorMessage = ""
+			&lcErrorProperty = ""
 		EndIf 
 		
 		Return lcErrorMessage
@@ -442,12 +448,6 @@ DEFINE CLASS foxrun AS custom
 	PROCEDURE Init
 		This.SetPrivateDataSession()
 		
-		* Create and reset error message property
-		If Type("_Screen.cErrorMessage") = "U"
-			_Screen.AddProperty("cErrorMessage", "")
-		EndIf 
-		_Screen.cErrorMessage = ""
-		
 		Return DoDefault()
 	ENDPROC
 
@@ -455,6 +455,7 @@ DEFINE CLASS foxrun AS custom
 		* Process Async Command
 		* Called by tmrAsync
 		Local loAsyncCommand as ASyncCommand of FoxRun.vcx, lcCommandType, lvReturn, laParameters, loTaskCompletionSource
+		Local loErrorObject, lcErrorProperty
 		loAsyncCommand = This.oAsyncCommand	&& for Intellisense
 		
 		Assert !IsNull(loAsyncCommand) Message Program() + " Command object is NULL"
@@ -464,7 +465,9 @@ DEFINE CLASS foxrun AS custom
 			
 		* If error occurs, set exception in Task Completion Source	
 		* Called via BindEvent() if error message is set
-		BindEvent(_Screen, "cErrorMessage", This, "SetAsyncException", 1)
+		loErrorObject = Evaluate(JustStem(This.cErrorProperty))
+		lcErrorProperty = JustExt(This.cErrorProperty)
+		BindEvent(loErrorObject, lcErrorProperty, This, "SetAsyncException", 1)
 		
 		lcCommandType = Upper(Alltrim(loAsyncCommand.cCommandType))
 		If Type("loAsyncCommand.aParameters", 1) = "A" and !(Vartype(loAsyncCommand.aParameters[1]) = "L" and loAsyncCommand.aParameters[1] = .F.)
@@ -493,7 +496,7 @@ DEFINE CLASS foxrun AS custom
 		
 		EndCase
 		
-		UnBindEvents(_Screen, "cErrorMessage", This, "SetAsyncException")
+		UnBindEvents(loErrorObject, lcErrorProperty, This, "SetAsyncException")
 		
 		* Set result in Task Completion Source
 		* This triggers .NET that the command is complete
@@ -538,7 +541,7 @@ DEFINE CLASS foxrun AS custom
 	ENDPROC
 
 	PROCEDURE setasyncexception		&& Set exception in .NET Task Completion Source.
-		If !Empty(_Screen.cErrorMessage)
+		If !Empty(Evaluate(This.cErrorProperty))
 			* Set exception in Task Completion Source
 			* This triggers .NET that the command is complete
 			* Release property references before setting result, or they could affect next call
@@ -559,6 +562,23 @@ DEFINE CLASS foxrun AS custom
 			* {CTRL+B} is hotkey to open Breakpoints dialog
 			Keyboard Textmerge("{CTRL+B}<<lcLocation>>{TAB}<<lcFilename>>{ENTER}{ENTER}")
 		EndIf 
+	ENDPROC
+
+	PROCEDURE seterrorproperty		&& Set global Object.Property that contains the error message reported by GetErrorMessage(). It must be a property on a global object. A global variable is not sufficient.
+		* Set global Object.Property that contains the error message reported by GetErrorMessage(). 
+		* It must be a property on a global object. A global variable is not sufficient.
+		Lparameters lcErrorPropertyName
+		Local loErrorObject, lcErrorProperty
+		
+		* Create and reset error message property
+		lcErrorPropertyName = Evl(lcErrorPropertyName, This.cErrorProperty)
+		This.cErrorProperty = Alltrim(lcErrorPropertyName)
+		If Type(lcErrorPropertyName) = "U"
+			loErrorObject = Evaluate(JustStem(lcErrorPropertyName))
+			lcErrorProperty = JustExt(lcErrorPropertyName)
+			AddProperty(loErrorObject, lcErrorProperty, "")
+		EndIf 
+		&lcErrorPropertyName = ""
 	ENDPROC
 
 	PROTECTED PROCEDURE setprivatedatasession		&& Set up private data session for object.

@@ -303,7 +303,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void ErrorTest()
         {
-            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true, false, "_Screen.cTestErrorMessage"))
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
@@ -321,7 +321,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public async Task ErrorAsyncTest()
         {
-            using (Fox fox = new Fox("FoxTests", null, 60, true))
+            using (Fox fox = new Fox("FoxTests", null, 60, true, false, "_Screen.cTestErrorMessage"))
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
@@ -339,7 +339,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void ErrorNoDebugTest()
         {
-            using (Fox fox = new Fox("FoxTests", null, 60, false))
+            using (Fox fox = new Fox("FoxTests", null, 60, false, false, "_Screen.cTestErrorMessage"))
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
@@ -358,7 +358,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public async Task ErrorNoDebugAsyncTest()
         {
-            using (Fox fox = new Fox("FoxTests", null, 60, false))
+            using (Fox fox = new Fox("FoxTests", null, 60, false, false, "_Screen.cTestErrorMessage"))
             {
                 fox.StartRequest("FoxTests");
                 fox.DoCmd("Set path to '" + foxCodePath + "' Additive");
