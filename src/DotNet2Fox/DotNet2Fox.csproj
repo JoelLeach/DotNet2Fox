@@ -11,6 +11,7 @@
     <Description>Simplify calling Visual FoxPro code from .NET via COM interop.</Description>
     <PackageProjectUrl>https://github.com/JoelLeach/DotNet2Fox</PackageProjectUrl>
     <RepositoryUrl></RepositoryUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
     <None Include="..\FoxCOM\foxcom.prg">
