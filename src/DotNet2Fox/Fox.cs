@@ -853,7 +853,7 @@ namespace DotNet2Fox
                         // Errors during async calls could cause "Cannot Quit Visual FoxPro" issue
                         // Setting lQuitOnDestroy prevents that from happening, and doesn't cause other issues
                         foxCOM.lQuitOnDestroy = true;
-                        foxCOM.VFP.Visible = true;  // only visible in development or for IIS user
+                        //foxCOM.VFP.Visible = true;  // only visible in development or for IIS user
                     }
                     ProcessId = foxCOM.VFP.ProcessId;
 
