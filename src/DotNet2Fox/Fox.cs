@@ -524,7 +524,7 @@ namespace DotNet2Fox
         /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
         /// <param name="parameters">Optional. Specifies optional parameters that are passed to the method specified with methodName.</param>
         /// <returns>Result of method.</returns>
-        public dynamic CallMethod(string methodName, string className, string module, string inApplication = "", params object[] parameters)
+        public dynamic CallMethod(string methodName, string className, string module = "", string inApplication = "", params object[] parameters)
         {
             dynamic result;
             try
@@ -560,7 +560,7 @@ namespace DotNet2Fox
         /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
         /// <param name="parameters">Optional. Specifies optional parameters that are passed to the method specified with methodName.</param>
         /// <returns>Result of method.</returns>
-        public async Task<dynamic> CallMethodAsync(string methodName, string className, string module, string inApplication = "", params object[] parameters)
+        public async Task<dynamic> CallMethodAsync(string methodName, string className, string module = "", string inApplication = "", params object[] parameters)
         {
             dynamic result;
             var tcs = new TaskCompletionSourceWrapper();
@@ -585,7 +585,7 @@ namespace DotNet2Fox
         /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
         /// <param name="parameters">Optional. Specifies optional parameters that are passed to the Init event procedure for the class or object.</param>
         /// <returns>Visual FoxPro object.</returns>
-        public dynamic CreateNewObject(string className, string module, string inApplication="", params object[] parameters)
+        public dynamic CreateNewObject(string className, string module = "", string inApplication="", params object[] parameters)
         {
             dynamic result;
             try
@@ -620,7 +620,7 @@ namespace DotNet2Fox
         /// <param name="inApplication">Specifies the Visual FoxPro application (.exe or .app) containing the .vcx file you specify with cModule.</param>
         /// <param name="parameters">Optional. Specifies optional parameters that are passed to the Init event procedure for the class or object.</param>
         /// <returns>Visual FoxPro object.</returns>
-        public async Task<dynamic> CreateNewObjectAsync(string className, string module, string inApplication = "", params object[] parameters)
+        public async Task<dynamic> CreateNewObjectAsync(string className, string module = "", string inApplication = "", params object[] parameters)
         {
             dynamic result;
             var tcs = new TaskCompletionSourceWrapper();
