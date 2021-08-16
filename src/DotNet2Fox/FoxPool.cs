@@ -55,6 +55,12 @@ namespace DotNet2Fox
         /// </summary>
         public static bool RecycleOtherKeys { get; set; }
         /// <summary>
+        /// Name of the global FoxPro Object.Property that contains the latest error message. 
+        /// It must be a property on a global object. A global string variable is not sufficient.
+        /// Default: "_Screen.cErrorMessage"
+        /// </summary>
+        public static string ErrorPropertyName { get; set; }
+        /// <summary>
         /// Type/class of FoxApp object with Start/End hooks containing application specific code. Set with SetFoxAppType().
         /// </summary>
         private static Type FoxAppType { get; set; }
@@ -67,6 +73,7 @@ namespace DotNet2Fox
             DebugMode = false;
             FoxTimeout = 30;
             RecycleOtherKeys = false;
+            ErrorPropertyName = "_Screen.cErrorMessage";
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
         }
 
@@ -105,7 +112,7 @@ namespace DotNet2Fox
                         instanceCount++;
                         Debug.WriteLine("GetObject() not found: " + key);
                         IFoxApp foxApp = CreateFoxAppObject();
-                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
+                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
                         break;
                     }
                     else if (instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
@@ -118,7 +125,7 @@ namespace DotNet2Fox
                             Debug.WriteLine("Stealing pool slot from a different key: " + key);
                             fox.RemoveFromPool();
                             IFoxApp foxApp = CreateFoxAppObject();
-                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
+                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
                             break;
                         }
                     }
@@ -176,7 +183,7 @@ namespace DotNet2Fox
                         instanceCount++;
                         Debug.WriteLine("GetObject() not found: " + key);
                         IFoxApp foxApp = CreateFoxAppObject();
-                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
+                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
                         break;
                     }
                     else if (instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
@@ -189,7 +196,7 @@ namespace DotNet2Fox
                             Debug.WriteLine("Stealing pool slot from a different key: " + key);
                             fox.RemoveFromPool();
                             IFoxApp foxApp = CreateFoxAppObject();
-                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true);
+                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
                             break;
                         }
                     }
