@@ -118,6 +118,50 @@ namespace DotNet2Fox
         }
 
         /// <summary>
+        /// Create Fox instance and automatically run StartRequest().
+        /// </summary>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
+        /// <param name="foxApp">FoxApp object with Start/End hooks containing application specific code.</param>
+        /// <param name="foxTimeout">Seconds of inactivity before foxCOM object is released.</param>
+        /// <param name="debugMode">When true, commands are executed within Visual FoxPro IDE capable of debugging.</param>
+        /// <param name="usingPool">When true, Fox object is used within pool.</param>
+        /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
+        /// It must be a property on a global object. A global string variable is not sufficient.</param>
+        public static Fox Start(string key,
+            IFoxApp foxApp = null,
+            int foxTimeout = 60,
+            bool debugMode = false,
+            bool usingPool = false,
+            string errorPropertyName = "_Screen.cErrorMessage")
+        {
+            Fox fox = new Fox(key, foxApp, foxTimeout, debugMode, usingPool, errorPropertyName);
+            fox.StartRequest(key);
+            return fox;
+        }
+
+        /// <summary>
+        /// Create Fox instance and automatically run StartRequestAsync().
+        /// </summary>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
+        /// <param name="foxApp">FoxApp object with Start/End hooks containing application specific code.</param>
+        /// <param name="foxTimeout">Seconds of inactivity before foxCOM object is released.</param>
+        /// <param name="debugMode">When true, commands are executed within Visual FoxPro IDE capable of debugging.</param>
+        /// <param name="usingPool">When true, Fox object is used within pool.</param>
+        /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
+        /// It must be a property on a global object. A global string variable is not sufficient.</param>
+        public static async Task<Fox> StartAsync(string key,
+            IFoxApp foxApp = null,
+            int foxTimeout = 60,
+            bool debugMode = false,
+            bool usingPool = false,
+            string errorPropertyName = "_Screen.cErrorMessage")
+        {
+            Fox fox = new Fox(key, foxApp, foxTimeout, debugMode, usingPool, errorPropertyName);
+            await fox.StartRequestAsync(key);
+            return fox;
+        }
+
+        /// <summary>
         /// Start request and call FoxApp startup hooks (called automatically by FoxPool.GetObject()).
         /// </summary>
         /// <param name="key">Key used to differentiate Fox object within pool.</param>
@@ -1227,7 +1271,9 @@ namespace DotNet2Fox
             }
         }
 
-        // This code added to correctly implement the disposable pattern.
+        /// <summary>
+        /// This code added to correctly implement the disposable pattern. 
+        /// </summary>        // 
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
@@ -1238,9 +1284,11 @@ namespace DotNet2Fox
             //    GC.SuppressFinalize(this);
             //}
         }
-#endregion
+        #endregion
 
-        // Finalizer in case Dispose not called by user
+        /// <summary>
+        /// Finalizer in case Dispose not called by user
+        /// </summary>
         ~Fox()
         {
             Debug.WriteLine(key + ": Fox destructor " + Id);
