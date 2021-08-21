@@ -227,7 +227,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void PoolReleaseFormTest()
         {
-            FoxPool.DebugMode = false;
+            FoxPool.DebugMode = true;
             for (int i = 0; i < 5; i++)
             {
                 using (Fox fox = FoxPool.GetObject("FoxTests"))
