@@ -325,7 +325,9 @@ namespace DotNet2Fox
             FoxAppType = typeof(TFoxApp);
         }
 
-        // Reset FoxAppType to null, so that no FoxApp object will be created
+        /// <summary>
+        /// Reset FoxAppType to null, so that no FoxApp object will be created
+        /// </summary>
         public static void ResetFoxAppType()
         {
             FoxAppType = null;
