@@ -292,22 +292,10 @@ namespace DotNet2Fox
                 {
                     if (pool.TryRemove(key, out fox))
                     {
-                        try
-                        {
-                            fox.Dispose();
-                        }
-                        catch (Exception)
-                        {
-                            throw;
-                        }
+                        fox.Dispose();
                     }
                 }
                 pool.Clear();
-            }
-            catch (Exception e)
-            {
-
-                throw e;
             }
             finally
             {
