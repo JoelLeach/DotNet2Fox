@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Timers;
@@ -1053,7 +1054,7 @@ namespace DotNet2Fox
         /// Handle error that raised while executing FoxPro code.
         /// </summary>
         /// <param name="ex">Exception raised from FoxPro.</param>
-        /// <param name="retryCount">Optional. Number of times to retry operation that caused error. Sets retryAfterError to true if operation can be retried.</param>
+        /// <param name="retryCount">Optional. Number of times to retry operation that caused error. Sets retryAfterError to true if operation can be retried. Used only for internal COM failures. Does not support retry after FoxPro error.</param>
         public void HandleError(Exception ex, int retryCount = 0)
         {
             Debug.WriteLine("HandleError(): " + Id + ex.ToString());
@@ -1066,7 +1067,8 @@ namespace DotNet2Fox
                 Debug.WriteLine("foxRun.GetErrorMessage(): " + Id + "\n" + error);
                 // Dispose object and don't return to pool
                 RemoveFromPool();
-                throw new COMException(error);
+                // Include original exception as InnerException so stack trace is included if needed
+                throw new COMException(error, ex);
             }
             else if (retries < retryCount && (ex is COMException || ex is MissingMemberException || 
                 ex is RuntimeBinderException || ex is NullReferenceException))
@@ -1078,7 +1080,9 @@ namespace DotNet2Fox
             }
             else
             {
-                throw ex;
+                // Otherwise, rethrow exception and retain stack trace
+                // See https://stackoverflow.com/a/17091351/6388118
+                ExceptionDispatchInfo.Capture(ex).Throw();
             }
         }
 
