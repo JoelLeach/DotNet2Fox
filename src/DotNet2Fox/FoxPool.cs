@@ -122,10 +122,15 @@ namespace DotNet2Fox
                         fox = GetObjectFromPool();
                         if (fox != null)
                         {
-                            Debug.WriteLine("Stealing pool slot from a different key: " + key);
-                            fox.RemoveFromPool();
-                            IFoxApp foxApp = CreateFoxAppObject();
-                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                            // Instance with the same key might have been returned to pool since previous check above
+                            // If it's the same, no need to drop and recreate instance
+                            if (fox.GetKey() != key)
+                            {
+                                Debug.WriteLine("Stealing pool slot from a different key: " + key);
+                                fox.RemoveFromPool();
+                                IFoxApp foxApp = CreateFoxAppObject();
+                                fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                            }
                             break;
                         }
                     }
@@ -193,10 +198,15 @@ namespace DotNet2Fox
                         fox = GetObjectFromPool();
                         if (fox != null)
                         {
-                            Debug.WriteLine("Stealing pool slot from a different key: " + key);
-                            fox.RemoveFromPool();
-                            IFoxApp foxApp = CreateFoxAppObject();
-                            fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                            // Instance with the same key might have been returned to pool since previous check above
+                            // If it's the same, no need to drop and recreate instance
+                            if (fox.GetKey() != key)
+                            {
+                                Debug.WriteLine("Stealing pool slot from a different key: " + key);
+                                fox.RemoveFromPool();
+                                IFoxApp foxApp = CreateFoxAppObject();
+                                fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                            }
                             break;
                         }
                     }

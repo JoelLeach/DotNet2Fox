@@ -1095,6 +1095,16 @@ namespace DotNet2Fox
             Dispose();
         }
 
+        
+        /// <summary>
+        /// Get key of current Fox instance.
+        /// </summary>
+        /// <returns></returns>
+        public string GetKey()
+        {
+            return key;
+        }
+
         /// <summary>
         /// Released FoxCOM object.
         /// </summary>
