@@ -44,7 +44,7 @@ namespace DotNet2Fox.Tests
             var tasks = new List<Task>();
             for (int i = 0; i < iterations; i++)
             {
-                var j = i;  // needed to Task.Run to see variable
+                var j = i;  // needed for Task.Run to see variable
                 tasks.Add(Task.Run(() =>
                 {
                     Debug.WriteLine("********** Load Test: " + j.ToString());
@@ -81,20 +81,41 @@ namespace DotNet2Fox.Tests
             FoxPool.ClearPool();
             // Parallel.For and async don't mix
             // Use Tasks.WhenAll() instead: https://stackoverflow.com/a/19292500/6388118
-            var tasks = Enumerable.Range(0, iterations)
-                            .Select(async i =>
-                            {
-                                Debug.WriteLine("********** Load Test Async: " + i.ToString());
-                                using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
-                                {
-                                    //fox.DoCmd("? 'Load Test', " + i.ToString());
-                                    // fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
-                                    var result = await fox.EvalAsync("1+1");
-                                    Assert.AreEqual(result, 2);
-                                }
-                            })
-                            .ToArray();
+            var tasks = new List<Task>();
+            for (int i = 0; i < iterations; i++)
+            {
+                var j = i;  // needed for Task.Run to see variable
+                tasks.Add(Task.Run(async () =>
+                {
+                    Debug.WriteLine("********** Load Test: " + j.ToString());
+                    using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
+                    {
+                        //fox.DoCmd("? 'Load Test', " + i.ToString());
+                        // fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
+                        var result = await fox.EvalAsync("1+1");
+                        Assert.AreEqual(result, 2);
+                    }
+                }));
+            }
             await Task.WhenAll(tasks);
+
+            // Enumerable.Range did not work right with async/await inside Select()
+            // Replaced with method above, which is same as sync load test
+            //var tasks = Enumerable.Range(0, iterations)
+            //                .Select(async i =>
+            //                {
+            //                    Debug.WriteLine("********** Load Test Async: " + i.ToString());
+            //                    using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
+            //                    {
+            //                        //fox.DoCmd("? 'Load Test', " + i.ToString());
+            //                        // fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
+            //                        var result = await fox.EvalAsync("1+1");
+            //                        Assert.AreEqual(result, 2);
+            //                    }
+            //                })
+            //                .ToArray();
+            //await Task.WhenAll(tasks);
+
             Debug.WriteLine("==== End LoadTestAsync: " + iterations.ToString() + " ===");
             FoxPool.ClearPool();
         }
