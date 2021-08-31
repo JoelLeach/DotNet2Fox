@@ -100,7 +100,7 @@ namespace DotNet2Fox
         /// <param name="usingPool">When true, Fox object is used within pool.</param>
         /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
         /// It must be a property on a global object. A global string variable is not sufficient.</param>
-        public Fox(string key,
+        public Fox(string key = "DotNet2Fox",
             IFoxApp foxApp = null,
             int foxTimeout = 60,
             bool debugMode = false,
@@ -128,7 +128,7 @@ namespace DotNet2Fox
         /// <param name="usingPool">When true, Fox object is used within pool.</param>
         /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
         /// It must be a property on a global object. A global string variable is not sufficient.</param>
-        public static Fox Start(string key,
+        public static Fox Start(string key = "DotNet2Fox",
             IFoxApp foxApp = null,
             int foxTimeout = 60,
             bool debugMode = false,
@@ -150,7 +150,7 @@ namespace DotNet2Fox
         /// <param name="usingPool">When true, Fox object is used within pool.</param>
         /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
         /// It must be a property on a global object. A global string variable is not sufficient.</param>
-        public static async Task<Fox> StartAsync(string key,
+        public static async Task<Fox> StartAsync(string key = "DotNet2Fox",
             IFoxApp foxApp = null,
             int foxTimeout = 60,
             bool debugMode = false,
@@ -167,7 +167,7 @@ namespace DotNet2Fox
         /// </summary>
         /// <param name="key">Key used to differentiate Fox object within pool.</param>
         // Initialize FoxRun object before calling other methods
-        public void StartRequest(string key)
+        public void StartRequest(string key = "DotNet2Fox")
         {
             // Lock to make sure previous request is completely disposed before starting new request
             lock (requestLock)
@@ -192,7 +192,7 @@ namespace DotNet2Fox
         /// <param name="key">Key used to differentiate Fox object within pool.</param>
         /// <returns></returns>
         // Same as StartRequest() except it calls StartAppAsync() and async hooks
-        public async Task StartRequestAsync(string key)
+        public async Task StartRequestAsync(string key = "DotNet2Fox")
         {
             // Lock to make sure previous request is completely disposed before starting new request
             lock (requestLock)
