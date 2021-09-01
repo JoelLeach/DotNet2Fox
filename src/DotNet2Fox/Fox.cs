@@ -807,6 +807,18 @@ namespace DotNet2Fox
         }
 
         /// <summary>
+        /// Load breakpoints from resource file. 
+        /// </summary>
+        /// <param name="resourceFile">Optional. Path to resource file containing breakpoints. Default is current resource file - Sys(2005).</param>
+        public void LoadBreakpoints(string resourceFile = "")
+        {
+            if (debugMode)
+            {
+                foxRun.LoadBreakpoints(resourceFile);
+            }
+        }
+
+        /// <summary>
         /// Set breakpoint in specified file/location.
         /// Only applicable in debug mode.
         /// </summary>
