@@ -57,6 +57,7 @@ DEFINE CLASS foxrun AS custom
 		*m: execscript		&& Execute script.
 		*m: execscriptasync		&& Execute script (async).
 		*m: geterrormessage		&& Get last recorded error.  Requires error handler in Fox app to set _Screen.cErrorMessage.
+		*m: loadbreakpoints		&& Load breakpoints from resource file.
 		*m: processasynccommand		&& Process async command.
 		*m: setasynccommand		&& Setup async command and timer to execute it.
 		*m: setasyncexception		&& Set exception in .NET Task Completion Source.
@@ -116,6 +117,7 @@ DEFINE CLASS foxrun AS custom
 		<memberdata name="setbreakpoint" display="SetBreakpoint"/>
 		<memberdata name="cerrorproperty" display="cErrorProperty"/>
 		<memberdata name="seterrorproperty" display="SetErrorProperty"/>
+		<memberdata name="loadbreakpoints" display="LoadBreakpoints"/>
 		</VFPData>		&& XML Metadata for customizable properties
 	
 	PROCEDURE call		&& Execute/call function.
@@ -451,6 +453,48 @@ DEFINE CLASS foxrun AS custom
 		Return DoDefault()
 	ENDPROC
 
+	PROCEDURE loadbreakpoints		&& Load breakpoints from resource file.
+		* Load breakpoints from resource file.
+		Lparameters lcResourceFile
+		Local lnCurrentArea, lcBreakpoints, lcConfigFile, lcClipText
+		
+		If _VFP.StartMode > 1
+			Return 
+		EndIf 
+		
+		If Empty(lcResourceFile)
+			lcResourceFile = Sys(2005)
+		EndIf 
+		
+		lnCurrentArea = Select()
+		
+		* Get breakpoints from resource file
+		Select 0
+		Use Sys(2005) Again 
+		Locate for ID = "BPOINTS"
+		If Found()
+			lcBreakpoints = StrExtract(Data, "DBGCFGVERSION", "", 1, 4)
+		EndIf 
+		Use 
+		
+		* Copy breakpoints to config file and load into debugger
+		If !Empty(lcBreakpoints)
+			lcConfigFile = Addbs(Sys(2023)) + "Breakpoints" + Sys(2015) + Transform(_VFP.ThreadId) + ".dbg"
+			Erase (lcConfigFile)
+			StrToFile(lcBreakpoints, lcConfigFile)
+			Debug
+			* Clipboard is faster than typing filename
+			lcClipText = _ClipText
+			_ClipText = lcConfigFile
+			Keyboard "{F2}{CTRL+V}{ENTER}"	
+			Doevents 
+			_ClipText = lcClipText
+			Erase (lcConfigFile)
+		EndIf 
+		
+		Select (lnCurrentArea)
+	ENDPROC
+
 	PROCEDURE processasynccommand		&& Process async command.
 		* Process Async Command
 		* Called by tmrAsync
@@ -560,6 +604,8 @@ DEFINE CLASS foxrun AS custom
 		If _VFP.StartMode = 1
 			* No way to programmatically set breakpoint, so populates Breakpoints dialog using keyboard commands
 			* {CTRL+B} is hotkey to open Breakpoints dialog
+			* Hotkey may not be available on menu, so open Debugger first.
+			Debug
 			Keyboard Textmerge("{CTRL+B}<<lcLocation>>{TAB}<<lcFilename>>{ENTER}{ENTER}")
 		EndIf 
 	ENDPROC
