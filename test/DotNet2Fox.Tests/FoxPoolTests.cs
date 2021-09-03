@@ -14,6 +14,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void PoolGetObjectTest()
         {
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.DebugMode = true;
             using (Fox fox = FoxPool.GetObject("FoxTests"))
             {
@@ -26,6 +27,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public async Task PoolGetObjectAsyncTest()
         {
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.DebugMode = true;
             using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
             {
@@ -37,7 +39,7 @@ namespace DotNet2Fox.Tests
 
         private void LoadTest(int iterations)
         {
-            Debug.WriteLine("==== Begin LoadTest: " + iterations.ToString() + " ===");
+            Debug.WriteLine("==== Begin LoadTest: " + iterations.ToString() + " " + DateTime.Now.ToString() + " ===");
             FoxPool.ClearPool();
 
             // Task.WhenAll method is similar to async test
@@ -71,7 +73,7 @@ namespace DotNet2Fox.Tests
             //        Assert.AreEqual(result, 2);
             //    }
             //});
-            Debug.WriteLine("==== End LoadTest: " + iterations.ToString() + " ===");
+            Debug.WriteLine("==== End LoadTest: " + iterations.ToString() + " " + DateTime.Now.ToString() + " ===");
             FoxPool.ClearPool();
         }
 
@@ -200,6 +202,7 @@ namespace DotNet2Fox.Tests
 
         private void TimeoutTest()
         {
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.FoxTimeout = 1;
             var lastThreadID = 0;
             var newThreadID = 0;
@@ -248,6 +251,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void PoolReleaseFormTest()
         {
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.DebugMode = true;
             for (int i = 0; i < 5; i++)
             {
@@ -284,6 +288,7 @@ namespace DotNet2Fox.Tests
         public void PoolPerformanceTest()
         {
             // Performance when calling single Fox instance multiple times
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.DebugMode = true;
             int iterations = 100;
             var stopwatch = Stopwatch.StartNew();
@@ -306,6 +311,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public async Task PoolPerformanceAsyncTest()
         {
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.DebugMode = true;
             int iterations = 100;
             var stopwatch = Stopwatch.StartNew();
@@ -328,6 +334,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public void PoolStealSlotTest()
         {
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.DebugMode = true;
             FoxPool.RecycleOtherKeys = false;
             int poolSize = FoxPool.PoolSize;
@@ -358,6 +365,7 @@ namespace DotNet2Fox.Tests
         [TestMethod()]
         public async Task PoolStealSlotTestAsync()
         {
+            Debug.WriteLine(DateTime.Now.ToString());
             FoxPool.DebugMode = true;
             FoxPool.RecycleOtherKeys = false;
             int poolSize = FoxPool.PoolSize;
