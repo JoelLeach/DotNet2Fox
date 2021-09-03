@@ -1,6 +1,7 @@
 ﻿// Run code in FoxPro from .NET
 // .NET interface to generic FoxPro COM object
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -80,6 +81,10 @@ namespace DotNet2Fox
         /// If set to true in HandleError(), operation may be retried.
         /// </summary>
         private bool retryAfterError;
+        /// <summary>
+        /// List of COM objects to release when request is complete. See RegisterComObjectForRelease() and CleanupComObjects().
+        /// </summary>
+        private List<object> ComObjectsToRelease = new List<object>();
 
         /// <summary>
         /// Unique Fox object ID. Used for DotNet2Fox internal debugging.
@@ -490,6 +495,7 @@ namespace DotNet2Fox
                     result = null;
                 }
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -513,6 +519,7 @@ namespace DotNet2Fox
                 HandleError(ex, 0);
                 result = null;
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -549,6 +556,7 @@ namespace DotNet2Fox
                     result = null;
                 }
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -575,6 +583,7 @@ namespace DotNet2Fox
                 HandleError(ex, 0);
                 result = null;
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -610,6 +619,7 @@ namespace DotNet2Fox
                     result = null;
                 }
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -635,6 +645,7 @@ namespace DotNet2Fox
                 HandleError(ex, 0);
                 result = null;
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -721,6 +732,7 @@ namespace DotNet2Fox
                     result = null;
                 }
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -744,6 +756,7 @@ namespace DotNet2Fox
                 HandleError(ex, 0);
                 result = null;
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -767,6 +780,7 @@ namespace DotNet2Fox
                 HandleError(ex, 0);
                 result = null;
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -791,6 +805,7 @@ namespace DotNet2Fox
                 HandleError(ex, 0);
                 result = null;
             }
+            RegisterComObjectForRelease(result);
             return result;
         }
 
@@ -842,7 +857,36 @@ namespace DotNet2Fox
             // For .NET 5.0, indicate this only runs on Windows to prevent warning    
             Debug.Assert(OperatingSystem.IsWindows());
 #endif
-            Marshal.ReleaseComObject(comObject);
+            if (Marshal.IsComObject(comObject))
+            {
+                Marshal.ReleaseComObject(comObject);
+            }
+        }
+
+        /// <summary>
+        /// Register COM object to be released when request is complete.
+        /// Called automatically by CreateNewObject(), CallMethod(), Call(), Eval(), ExecScript() when a COM object is returned.
+        /// </summary>
+        /// <param name="comObject">COM object to register for release.</param>
+        public void RegisterComObjectForRelease(object comObject)
+        {
+            if (comObject != null && Marshal.IsComObject(comObject))
+            {
+                ComObjectsToRelease.Add(comObject);
+            }
+        }
+
+        /// <summary>
+        /// NOT RECOMMENDED: Unregister COM object that was previously registered with RegisterComObjectForRelease().
+        /// Object will NOT automatically be released when request is complete. 
+        /// </summary>
+        /// <param name="comObject">COM object to unregister for release.</param>
+        public void UnregisterComObjectForRelease(object comObject)
+        {
+            if (Marshal.IsComObject(comObject))
+            {
+                ComObjectsToRelease.RemoveAll(o => o == comObject);
+            }
         }
 
         /// <summary>
@@ -1228,12 +1272,22 @@ namespace DotNet2Fox
         /// </summary>
         private void CleanupComObjects()
         {
+            // The GC cleanup technique below doesn't always release all COM objects.
+            // References are explicitly tracked via RegisterComObjectForRelease() and released here.
+            // FoxCOM.exe can crash on exit if COM objects are not released.
+            // Release in reverse order to make sure none are skipped: https://stackoverflow.com/a/7193317/6388118
+            for (int i = ComObjectsToRelease.Count - 1; i >= 0; i--)
+            {
+                var comObject = ComObjectsToRelease[i];
+                ComObjectsToRelease.RemoveAt(i);
+                ReleaseComObject(comObject);                
+            }
+
             Debug.WriteLine("GC Cleanup: " + Id);
             // Release any COM objects created by FoxRun (CreateNewObject(), etc.)
             // See https://stackoverflow.com/questions/37904483/as-of-today-what-is-the-right-way-to-work-with-com-objects
             do
             {
-                //Debug.WriteLine("GC Cleanup Loop: " + id);
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
             }
