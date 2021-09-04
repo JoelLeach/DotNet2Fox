@@ -85,6 +85,10 @@ namespace DotNet2Fox
         /// List of COM objects to release when request is complete. See RegisterComObjectForRelease() and CleanupComObjects().
         /// </summary>
         private List<object> ComObjectsToRelease = new List<object>();
+        /// <summary>
+        /// Is true when current request is async. Set by StartRequest() and StartRequestAsync().
+        /// </summary>
+        private bool asyncRequest;
 
         /// <summary>
         /// Unique Fox object ID. Used for DotNet2Fox internal debugging.
@@ -180,6 +184,7 @@ namespace DotNet2Fox
                 // Reset timer
                 foxTimer.Stop();
                 requestRunning = true;
+                asyncRequest = false;
                 // Reset disposal 
                 disposedValue = false;
                 Debug.WriteLine("StartRequest(): " + Id);
@@ -205,6 +210,7 @@ namespace DotNet2Fox
                 // Reset timer
                 foxTimer.Stop();
                 requestRunning = true;
+                asyncRequest = false;
                 // Reset disposal 
                 disposedValue = false;
                 Debug.WriteLine("StartRequest(): " + Id);
@@ -1005,8 +1011,20 @@ namespace DotNet2Fox
                 foxCOM = null;
                 if (reinstantiate)
                 {
+                    Debug.WriteLine("CheckFoxCOM() reinstantiating foxCOM after failure: " + Id);
                     //InstantiateFoxCOM();
-                    StartApp(this.key);
+                    if (asyncRequest)
+                    {
+                        // This call is blocking on purpose, since CheckFoxCOM() is not an async method.
+                        // This negates the async benefits, but avoids issues that would be caused by async void.
+                        // See https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming
+                        // Getting here should be pretty rare, so it's worth the tradeoff.
+                        StartAppAsync(this.key).Wait();
+                    }
+                    else
+                    {
+                        StartApp(this.key);
+                    }
                 }
             }
         }
@@ -1101,7 +1119,19 @@ namespace DotNet2Fox
                 foxRun = null;
                 if (reinstantiate)
                 {
-                    StartRequest(this.key);
+                    Debug.WriteLine("CheckFoxRun() reinstantiating foxRun after failure: " + Id);
+                    if (asyncRequest)
+                    {
+                        // This call is blocking on purpose, since CheckFoxRun() is not an async method.
+                        // This negates the async benefits, but avoids issues that would be caused by async void.
+                        // See https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming
+                        // Getting here should be pretty rare, so it's worth the tradeoff.
+                        StartRequestAsync(this.key).Wait();
+                    }
+                    else
+                    {
+                        StartRequest(this.key);
+                    }
                 }
             }
         }
