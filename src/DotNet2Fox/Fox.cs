@@ -84,7 +84,7 @@ namespace DotNet2Fox
         /// <summary>
         /// List of COM objects to release when request is complete. See RegisterComObjectForRelease() and CleanupComObjects().
         /// </summary>
-        private List<object> ComObjectsToRelease = new List<object>();
+        private List<object> comObjectsToRelease = new List<object>();
         /// <summary>
         /// Is true when current request is async. Set by StartRequest() and StartRequestAsync().
         /// </summary>
@@ -97,7 +97,7 @@ namespace DotNet2Fox
         /// <summary>
         /// Process ID of VFP/COM instance.
         /// </summary>
-        public int ProcessId;
+        public int ProcessId { get; set; }
 
         /// <summary>
         /// Execute FoxPro code from .NET.
@@ -878,7 +878,7 @@ namespace DotNet2Fox
         {
             if (comObject != null && Marshal.IsComObject(comObject))
             {
-                ComObjectsToRelease.Add(comObject);
+                comObjectsToRelease.Add(comObject);
             }
         }
 
@@ -891,7 +891,7 @@ namespace DotNet2Fox
         {
             if (Marshal.IsComObject(comObject))
             {
-                ComObjectsToRelease.RemoveAll(o => o == comObject);
+                comObjectsToRelease.RemoveAll(o => o == comObject);
             }
         }
 
@@ -1306,10 +1306,10 @@ namespace DotNet2Fox
             // References are explicitly tracked via RegisterComObjectForRelease() and released here.
             // FoxCOM.exe can crash on exit if COM objects are not released.
             // Release in reverse order to make sure none are skipped: https://stackoverflow.com/a/7193317/6388118
-            for (int i = ComObjectsToRelease.Count - 1; i >= 0; i--)
+            for (int i = comObjectsToRelease.Count - 1; i >= 0; i--)
             {
-                var comObject = ComObjectsToRelease[i];
-                ComObjectsToRelease.RemoveAt(i);
+                var comObject = comObjectsToRelease[i];
+                comObjectsToRelease.RemoveAt(i);
                 ReleaseComObject(comObject);                
             }
 
