@@ -334,6 +334,50 @@ namespace DotNet2Fox
         }
 
         /// <summary>
+        /// Preload pool with the specified number of instances for the specified key.
+        /// </summary>
+        /// <param name="instances">Number of instances to preload. Cannot exceed maximum pool size.</param>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
+        public static void Preload(int instances, string key)
+        {
+            instances = Math.Min(instances, PoolSize);
+            var tasks = new List<Task>();
+            for (int i = 0; i < instances; i++)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    instanceCount++;
+                    IFoxApp foxApp = CreateFoxAppObject();
+                    var fox = Fox.Start(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                    fox.Dispose();  // adds object to pool
+                }));
+            }
+            Task.WhenAll(tasks).Wait();
+        }
+
+        /// <summary>
+        /// Preload pool with the specified number of instances for the specified key. Calls async startup hooks.
+        /// </summary>
+        /// <param name="instances">Number of instances to preload. Cannot exceed maximum pool size.</param>
+        /// <param name="key">Key used to differentiate Fox object within pool.</param>
+        public static async Task PreloadAsync(int instances, string key)
+        {
+            instances = Math.Min(instances, PoolSize);
+            var tasks = new List<Task>();
+            for (int i = 0; i < instances; i++)
+            {
+                tasks.Add(Task.Run(async () =>
+                {
+                    instanceCount++;
+                    IFoxApp foxApp = CreateFoxAppObject();
+                    var fox = await Fox.StartAsync(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                    fox.Dispose();  // adds object to pool
+                }));
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        /// <summary>
         /// Create FoxApp object when Fox object is added to pool.
         /// </summary>
         /// <returns>FoxApp object</returns>
