@@ -66,6 +66,12 @@ namespace DotNet2Fox
         /// </summary>
         public static bool AutomaticGarbageCollection { get; set; }
         /// <summary>
+        /// Specifies the number of milliseconds GetObject()/GetObjectAsync() will wait before retrying when no Fox instances are available.
+        /// Default: 50
+        /// </summary>
+        public static int RetryWaitTime { get; set; }
+        
+        /// <summary>
         /// Type/class of FoxApp object with Start/End hooks containing application specific code. Set with SetFoxAppType().
         /// </summary>
         private static Type FoxAppType { get; set; }
@@ -79,6 +85,7 @@ namespace DotNet2Fox
             FoxTimeout = 30;
             RecycleOtherKeys = false;
             ErrorPropertyName = "_Screen.cErrorMessage";
+            RetryWaitTime = 50;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
         }
 
@@ -143,7 +150,7 @@ namespace DotNet2Fox
                     if (fox == null)
                     {
                         // All instances are created and busy, so wait for one to become available
-                        Thread.Sleep(50);
+                        Thread.Sleep(RetryWaitTime);
                     }
                 }
                 else
@@ -220,7 +227,7 @@ namespace DotNet2Fox
                     if (fox == null)
                     {
                         // All instances are created and busy, so wait for one to become available
-                        await Task.Delay(50);
+                        await Task.Delay(RetryWaitTime);
                     }
                 }
                 else
