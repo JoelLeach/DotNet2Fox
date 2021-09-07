@@ -61,6 +61,11 @@ namespace DotNet2Fox
         /// </summary>
         public static string ErrorPropertyName { get; set; }
         /// <summary>
+        /// When true, GC.Collect() will be performed automatically after each request to release any pending COM objects.
+        /// Default: true
+        /// </summary>
+        public static bool AutomaticGarbageCollection { get; set; }
+        /// <summary>
         /// Type/class of FoxApp object with Start/End hooks containing application specific code. Set with SetFoxAppType().
         /// </summary>
         private static Type FoxAppType { get; set; }
@@ -148,6 +153,7 @@ namespace DotNet2Fox
                 }
             }
 
+            fox.AutomaticGarbageCollection = AutomaticGarbageCollection;
             fox.StartRequest(key);
             return fox;
         }
@@ -224,6 +230,7 @@ namespace DotNet2Fox
                 }
             }
 
+            fox.AutomaticGarbageCollection = AutomaticGarbageCollection;
             await fox.StartRequestAsync(key);
             return fox;
         }

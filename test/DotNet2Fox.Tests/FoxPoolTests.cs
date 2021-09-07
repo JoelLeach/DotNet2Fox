@@ -54,6 +54,7 @@ namespace DotNet2Fox.Tests
                     {
                         //fox.DoCmd("? 'Load Test', " + i.ToString());
                         // fox.DoCmd($"Wait Window NoWait 'Load Test {i}'");
+                        //fox.AutomaticGarbageCollection = false;
                         var result = fox.Eval("1+1");
                         Assert.AreEqual(result, 2);
                     }

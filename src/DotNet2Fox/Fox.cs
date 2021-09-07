@@ -91,6 +91,11 @@ namespace DotNet2Fox
         private bool asyncRequest;
 
         /// <summary>
+        /// When true, GC.Collect() will be performed automatically after each request to release any pending COM objects.
+        /// Default: true
+        /// </summary>
+        public bool AutomaticGarbageCollection {get; set;}
+        /// <summary>
         /// Unique Fox object ID. Used for DotNet2Fox internal debugging.
         /// </summary>
         public string Id { get; set; }
@@ -123,6 +128,7 @@ namespace DotNet2Fox
             this.usingPool = usingPool;
             this.errorPropertyName = errorPropertyName;
             Id = Guid.NewGuid().ToString();
+            AutomaticGarbageCollection = true;
             Debug.WriteLine("Fox constructed: " + key + " " + Id);
             CreateTimer();
         }
@@ -1226,6 +1232,7 @@ namespace DotNet2Fox
                 {
                     if (foxCOM != null) // double-check
                     {
+                        GCCollect();
                         Marshal.ReleaseComObject(foxCOM);
                         foxCOM = null;
                     }
@@ -1310,9 +1317,20 @@ namespace DotNet2Fox
             {
                 var comObject = comObjectsToRelease[i];
                 comObjectsToRelease.RemoveAt(i);
-                ReleaseComObject(comObject);                
+                ReleaseComObject(comObject);
             }
 
+            if (AutomaticGarbageCollection)
+            {
+                GCCollect();
+            }
+        }
+
+        /// <summary>
+        /// Perform garbage collection to release any pending COM objects.
+        /// </summary>
+        public void GCCollect()
+        {
             Debug.WriteLine("GC Cleanup: " + Id);
             // Release any COM objects created by FoxRun (CreateNewObject(), etc.)
             // See https://stackoverflow.com/questions/37904483/as-of-today-what-is-the-right-way-to-work-with-com-objects
@@ -1325,7 +1343,7 @@ namespace DotNet2Fox
             Debug.WriteLine("GC Cleanup Complete: " + Id);
         }
 
-#region IDisposable Support
+        #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
         /// <summary>
