@@ -86,6 +86,10 @@ namespace DotNet2Fox
         /// </summary>
         private List<object> comObjectsToRelease = new List<object>();
         /// <summary>
+        /// Lock used to allow only one thread to cleanup COM objects at a time.
+        /// </summary>
+        private static readonly object cleanupComLock = new object();
+        /// <summary>
         /// Is true when current request is async. Set by StartRequest() and StartRequestAsync().
         /// </summary>
         private bool asyncRequest;
@@ -1281,19 +1285,7 @@ namespace DotNet2Fox
                         foxRun = null;
                     }
 
-                    if (usingPool)
-                    {
-                        // If using pool, only allow one thread to cleanup at a time
-                        // Marshal.AreComObjectsAvailableForCleanup() can hang if several threads call it at the same time
-                        lock (FoxPool.cleanupComLock)
-                        {
-                            CleanupComObjects();
-                        }
-                    }
-                    else
-                    {
-                        CleanupComObjects();
-                    }
+                    CleanupComObjects();
                 }
                 catch
                 {
@@ -1331,16 +1323,26 @@ namespace DotNet2Fox
         /// </summary>
         public void GCCollect()
         {
-            Debug.WriteLine("GC Cleanup: " + Id);
-            // Release any COM objects created by FoxRun (CreateNewObject(), etc.)
+            // Release any pending COM objects that are out of scope
             // See https://stackoverflow.com/questions/37904483/as-of-today-what-is-the-right-way-to-work-with-com-objects
+            Debug.WriteLine("GC Cleanup: " + Id);
             do
             {
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
             }
-            while (Marshal.AreComObjectsAvailableForCleanup());
+            while (AreComObjectsAvailableForCleanup());
             Debug.WriteLine("GC Cleanup Complete: " + Id);
+
+            bool AreComObjectsAvailableForCleanup()
+            {
+                // Allow only one thread to cleanup at a time
+                // Marshal.AreComObjectsAvailableForCleanup() can hang if several threads call it at the same time
+                lock (cleanupComLock)
+                {
+                    return Marshal.AreComObjectsAvailableForCleanup();
+                }
+            }
         }
 
         #region IDisposable Support
