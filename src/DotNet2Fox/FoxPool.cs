@@ -31,10 +31,6 @@ namespace DotNet2Fox
         /// Number of times existing Fox object was taken from pool. For DotNet2Fox internal debugging only.
         /// </summary>
         public static volatile int poolCount = 0;
-        /// <summary>
-        /// Lock used to allow one only thread to cleanup COM objects at a time.
-        /// </summary>
-        public static object cleanupComLock = new object();
 
         /// <summary>
         /// Maximum number of Fox objects that can be instantiated and placed in pool.
@@ -85,6 +81,7 @@ namespace DotNet2Fox
             FoxTimeout = 30;
             RecycleOtherKeys = false;
             ErrorPropertyName = "_Screen.cErrorMessage";
+            AutomaticGarbageCollection = true;
             RetryWaitTime = 50;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
         }
@@ -98,6 +95,9 @@ namespace DotNet2Fox
         public static Fox GetObject(string key)
         {
             Fox fox = null;
+            int retries = 0;
+            // Number of retries before slot can be stolen from another key in pool
+            const int retryLimit = 10;
 
             while (true)
             {
@@ -127,9 +127,9 @@ namespace DotNet2Fox
                         fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
                         break;
                     }
-                    else if (instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
+                    else if (retries > retryLimit && instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
                     {
-                        // If all instance slots used, but there is one available in pool with a different key,
+                        // If all instance slots used after retries, but there is one available in pool with a different key,
                         //  steal its slot, even though we're not recycling keys
                         fox = GetObjectFromPool();
                         if (fox != null)
@@ -145,11 +145,17 @@ namespace DotNet2Fox
                             }
                             break;
                         }
+                        else
+                        {
+                            // If no slots available, reset retries before trying to steal again
+                            retries = 0;
+                        }
                     }
 
                     if (fox == null)
                     {
                         // All instances are created and busy, so wait for one to become available
+                        retries++;
                         Thread.Sleep(RetryWaitTime);
                     }
                 }
@@ -175,6 +181,9 @@ namespace DotNet2Fox
         public static async Task<Fox> GetObjectAsync(string key)
         {
             Fox fox = null;
+            int retries = 0;
+            // Number of retries before slot can be stolen from another key in pool
+            const int retryLimit = 10;
 
             while (true)
             {
@@ -204,7 +213,7 @@ namespace DotNet2Fox
                         fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
                         break;
                     }
-                    else if (instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
+                    else if (retries > retryLimit && instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
                     {
                         // If all instance slots used, but there is one available in pool with a different key,
                         //  steal its slot, even though we're not recycling keys
@@ -222,11 +231,18 @@ namespace DotNet2Fox
                             }
                             break;
                         }
+                        else
+                        {
+                            // If no slots available, reset retries before trying to steal again
+                            retries = 0;
+                        }
+
                     }
 
                     if (fox == null)
                     {
                         // All instances are created and busy, so wait for one to become available
+                        retries++;
                         await Task.Delay(RetryWaitTime);
                     }
                 }
