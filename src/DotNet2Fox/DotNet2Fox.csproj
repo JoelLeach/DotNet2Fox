@@ -10,8 +10,11 @@
     <Authors>Joel Leach</Authors>
     <Description>Simplify calling Visual FoxPro code from .NET via COM interop.</Description>
     <PackageProjectUrl>https://github.com/JoelLeach/DotNet2Fox</PackageProjectUrl>
-    <RepositoryUrl></RepositoryUrl>
+    <RepositoryUrl>https://github.com/JoelLeach/DotNet2Fox.git</RepositoryUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Copyright © 2021 Joel Leach</Copyright>
   </PropertyGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
     <None Include="..\FoxCOM\foxcom.prg">

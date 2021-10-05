@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("DotNet2Fox")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Simplify calling Visual FoxPro code from .NET via COM interop.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("DotNet2Fox")]
-[assembly: AssemblyCopyright("Copyright ©  2021")]
+[assembly: AssemblyCopyright("Copyright © 2021 Joel Leach")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
