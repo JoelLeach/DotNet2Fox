@@ -6,7 +6,7 @@ DotNet2Fox is an open-source library that simplifies calling Visual FoxPro code 
 
 ## Presentation
 
-DotNet2Fox is being presented at [Virtual Fox Fest 2021](https://virtualfoxfest.com/).  Additional materials from the session will be made available here after the conference.
+DotNet2Fox was presented at [Virtual Fox Fest 2021 (October)](https://virtualfoxfest.com/).  The white paper, examples, and a link to a video of the session can be found on the [wiki](https://github.com/JoelLeach/DotNet2Fox/wiki).
 
 ## Installation
 Installing DotNet2Fox in your .NET project is easy via a NuGet package.  Simply search for “DotNet2Fox” in the Visual Studio NuGet Package Manager and install from there.  See [these instructions](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-in-visual-studio) for more details.  The package is hosted on nuget.org, and various other command-line options can be found there.
@@ -20,6 +20,8 @@ The NuGet package includes a script to check whether FoxCOM.exe has been previou
 
 Here are the system requirements for using and deploying DotNet2Fox:
 - Visual FoxPro 9.0 SP2
+  - VFP and the VFP runtimes must be properly installed and registered on the development machine for DotNet2Fox to function.
+  - SP2 can be found here: [VFP 9 Service Pack 2 (SP2) and Hotfix 3](https://github.com/VFPX/VFP9SP2Hotfix3)
 - Supported versions of .NET:
   - .NET Framework 4.6 – 4.8
   - .NET 5.0+
@@ -99,7 +101,7 @@ dynamic ExecScript(string script, params object[] parameters)
 ```
 
 ## Deployment
-To deploy DotNet2Fox, you need to distribute and register FoxCOM.EXE. Registration is performed with the following command and needs to be executed with admin elevation/rights:
+To deploy DotNet2Fox, additional work beyond publishing the .NET app is required.  The VFP 9 SP2 runtimes must be installed and registered on the target machine. FoxCOM.exe also needs to distributed and registered. Registration is performed with the following command and needs to be executed with admin elevation/rights:
     
     FoxCOM.EXE /regserver
 
