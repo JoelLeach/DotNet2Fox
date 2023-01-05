@@ -1,0 +1,25 @@
+# escape=`
+# Install ASP.NET Core runtime. Adapted from https://github.com/dotnet/dotnet-docker/tree/main/src/aspnet
+ARG DotNet2FoxTag=6.0-1809
+FROM joelleach/dotnet2fox:${DotNet2FoxTag}
+
+ARG ASPNetVer=6.0.12
+
+# ASP.NET Core version
+ENV ASPNET_VERSION=${ASPNetVer}
+
+# Install ASP.NET Core Runtime
+RUN powershell -Command `
+        $ErrorActionPreference = 'Stop'; `
+        $ProgressPreference = 'SilentlyContinue'; `
+        `
+        Invoke-WebRequest -OutFile aspnetcore.zip https://dotnetcli.azureedge.net/dotnet/aspnetcore/Runtime/$Env:ASPNET_VERSION/aspnetcore-runtime-$Env:ASPNET_VERSION-win-x64.zip; `
+        # Removed checksum verification to support multiple versions with one Dockerfile
+        # $aspnetcore_sha512 = 'e2c52af3361fdb9d5897a238e8275f7f9df8b37bd2b7d6f24c7b889111d1f1fd80f30b1a68022dee3e7378c6973a37f1ad0c96cea4c22d73d3cb5068d1cb3efd'; `
+        # if ((Get-FileHash aspnetcore.zip -Algorithm sha512).Hash -ne $aspnetcore_sha512) { `
+        #     Write-Host 'CHECKSUM VERIFICATION FAILED!'; `
+        #     exit 1; `
+        # }; `
+        `
+        tar -oxzf aspnetcore.zip -C $Env:ProgramFiles\dotnet ./shared/Microsoft.AspNetCore.App; `
+        Remove-Item -Force aspnetcore.zip

@@ -1,0 +1,9 @@
+# escape=`
+# Base Windows image already includes .NET Framework 4.8
+ARG VFPTag=1809
+FROM joelleach/vfp9-runtime:${VFPTag}
+
+COPY ["install", "C:\\install"]
+
+RUN C:\install\installfoxcom.cmd & `
+    rd /S /Q C:\install

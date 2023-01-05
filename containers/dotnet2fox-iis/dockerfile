@@ -1,0 +1,13 @@
+# escape=`
+# Install IIS with ASP.NET support for .NET 4.x apps.
+ARG DotNet2FoxTag=4.8-1809
+FROM joelleach/dotnet2fox:${DotNet2FoxTag}
+
+RUN powershell -Command `
+        Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebServerRole; `
+        Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASPNET45 -All; `
+        Invoke-WebRequest -UseBasicParsing -Uri "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.10/ServiceMonitor.exe" -OutFile "C:\ServiceMonitor.exe"
+
+EXPOSE 80
+
+ENTRYPOINT ["C:\\ServiceMonitor.exe", "w3svc"]

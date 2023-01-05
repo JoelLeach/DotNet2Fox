@@ -107,6 +107,9 @@ To deploy DotNet2Fox, additional work beyond publishing the .NET app is required
 
 Deployment with web applications also requires DCOM permissions to be configured on FoxCOM.exe.  See the whitepaper for more details.
 
+## Containers
+[Docker container images](containers) have been built for apps that use DotNet2Fox.
+
 ## More
 The whitepaper contains more details on the above and on the following topics:
 
