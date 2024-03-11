@@ -66,6 +66,14 @@ namespace DotNet2Fox
         /// Default: 50
         /// </summary>
         public static int RetryWaitTime { get; set; }
+
+        /// <summary>
+        /// When specified, will use reg-free COM to instantiate FoxCOM server.
+        /// </summary>
+        /// <remarks>
+        /// <b>Example:</b> FoxPool.RegFreeFoxCOMPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe"
+        /// </remarks>
+        public static string RegFreeFoxCOMPath { get; set; }
         
         /// <summary>
         /// Type/class of FoxApp object with Start/End hooks containing application specific code. Set with SetFoxAppType().
@@ -124,7 +132,7 @@ namespace DotNet2Fox
                         instanceCount++;
                         Debug.WriteLine("GetObject() not found: " + key);
                         IFoxApp foxApp = CreateFoxAppObject();
-                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName, RegFreeFoxCOMPath);
                         break;
                     }
                     else if (retries > retryLimit && instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
@@ -141,7 +149,7 @@ namespace DotNet2Fox
                                 Debug.WriteLine("Stealing pool slot from a different key: " + key);
                                 fox.RemoveFromPool();
                                 IFoxApp foxApp = CreateFoxAppObject();
-                                fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                                fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName, RegFreeFoxCOMPath);
                             }
                             break;
                         }
@@ -210,7 +218,7 @@ namespace DotNet2Fox
                         instanceCount++;
                         Debug.WriteLine("GetObject() not found: " + key);
                         IFoxApp foxApp = CreateFoxAppObject();
-                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                        fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName, RegFreeFoxCOMPath);
                         break;
                     }
                     else if (retries > retryLimit && instanceCount >= PoolSize && !RecycleOtherKeys && pool.Count > 0)
@@ -227,7 +235,7 @@ namespace DotNet2Fox
                                 Debug.WriteLine("Stealing pool slot from a different key: " + key);
                                 fox.RemoveFromPool();
                                 IFoxApp foxApp = CreateFoxAppObject();
-                                fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName);
+                                fox = new Fox(key, foxApp, FoxTimeout, DebugMode, true, ErrorPropertyName, RegFreeFoxCOMPath);
                             }
                             break;
                         }

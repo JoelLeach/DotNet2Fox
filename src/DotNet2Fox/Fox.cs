@@ -7,8 +7,8 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using Microsoft.CSharp.RuntimeBinder;
 
 namespace DotNet2Fox
@@ -29,7 +29,7 @@ namespace DotNet2Fox
         /// <summary>
         /// Timer that releases object from pool after period of inactivity.
         /// </summary>
-        private Timer foxTimer;
+        private System.Timers.Timer foxTimer;
         /// <summary>
         /// Key used to differentiate Fox object within pool.
         /// </summary>
@@ -93,6 +93,13 @@ namespace DotNet2Fox
         /// Is true when current request is async. Set by StartRequest() and StartRequestAsync().
         /// </summary>
         private bool asyncRequest;
+        /// <summary>
+        /// When specified, will use reg-free COM to instantiate FoxCOM server.
+        /// </summary>
+        /// <remarks>
+        /// <b>Example:</b> Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe"
+        /// </remarks>
+        private string regFreeFoxCOMPath;
 
         /// <summary>
         /// When true, GC.Collect() will be performed automatically after each request to release any pending COM objects.
@@ -118,12 +125,15 @@ namespace DotNet2Fox
         /// <param name="usingPool">When true, Fox object is used within pool.</param>
         /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
         /// It must be a property on a global object. A global string variable is not sufficient.</param>
+        /// <param name="regFreeFoxCOMPath">When specified, will use reg-free COM to instantiate FoxCOM server.
+        /// <b>Example:</b> Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe"</param>
         public Fox(string key = "DotNet2Fox",
             IFoxApp foxApp = null,
             int foxTimeout = 60,
             bool debugMode = false,
             bool usingPool = false,
-            string errorPropertyName = "_Screen.cErrorMessage")
+            string errorPropertyName = "_Screen.cErrorMessage",
+            string regFreeFoxCOMPath = "")
         {
             this.key = key;
             this.foxApp = foxApp;
@@ -131,6 +141,7 @@ namespace DotNet2Fox
             this.debugMode = debugMode;
             this.usingPool = usingPool;
             this.errorPropertyName = errorPropertyName;
+            this.regFreeFoxCOMPath = regFreeFoxCOMPath;
             Id = Guid.NewGuid().ToString();
             AutomaticGarbageCollection = true;
             Debug.WriteLine("Fox constructed: " + key + " " + Id);
@@ -147,14 +158,17 @@ namespace DotNet2Fox
         /// <param name="usingPool">When true, Fox object is used within pool.</param>
         /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
         /// It must be a property on a global object. A global string variable is not sufficient.</param>
+        /// <param name="regFreeFoxCOMPath">When specified, will use reg-free COM to instantiate FoxCOM server.
+        /// <b>Example:</b> Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe"</param>
         public static Fox Start(string key = "DotNet2Fox",
             IFoxApp foxApp = null,
             int foxTimeout = 60,
             bool debugMode = false,
             bool usingPool = false,
-            string errorPropertyName = "_Screen.cErrorMessage")
+            string errorPropertyName = "_Screen.cErrorMessage",
+            string regFreeFoxCOMPath = "")
         {
-            Fox fox = new Fox(key, foxApp, foxTimeout, debugMode, usingPool, errorPropertyName);
+            Fox fox = new Fox(key, foxApp, foxTimeout, debugMode, usingPool, errorPropertyName, regFreeFoxCOMPath);
             fox.StartRequest(key);
             return fox;
         }
@@ -169,14 +183,17 @@ namespace DotNet2Fox
         /// <param name="usingPool">When true, Fox object is used within pool.</param>
         /// <param name="errorPropertyName">Name of the global FoxPro Object.Property that contains the latest error message. 
         /// It must be a property on a global object. A global string variable is not sufficient.</param>
+        /// <param name="regFreeFoxCOMPath">When specified, will use reg-free COM to instantiate FoxCOM server.
+        /// <b>Example:</b> Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe"</param>
         public static async Task<Fox> StartAsync(string key = "DotNet2Fox",
             IFoxApp foxApp = null,
             int foxTimeout = 60,
             bool debugMode = false,
             bool usingPool = false,
-            string errorPropertyName = "_Screen.cErrorMessage")
+            string errorPropertyName = "_Screen.cErrorMessage", 
+            string regFreeFoxCOMPath = "")
         {
-            Fox fox = new Fox(key, foxApp, foxTimeout, debugMode, usingPool, errorPropertyName);
+            Fox fox = new Fox(key, foxApp, foxTimeout, debugMode, usingPool, errorPropertyName, regFreeFoxCOMPath);
             await fox.StartRequestAsync(key);
             return fox;
         }
@@ -418,6 +435,8 @@ namespace DotNet2Fox
             {
                 foxRun.DoCmdAsync(tcs, command);
                 result = await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -470,8 +489,10 @@ namespace DotNet2Fox
             var tcs = new TaskCompletionSourceWrapper();
             try
             {
-               foxRun.EvalAsync(tcs, expression);
-               result = await tcs.Task;
+                foxRun.EvalAsync(tcs, expression);
+                result = await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -529,6 +550,8 @@ namespace DotNet2Fox
             {
                 foxRun.CallAsync(tcs, functionName, parameters);
                 result = await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -593,6 +616,8 @@ namespace DotNet2Fox
             {
                 foxRun.CallMethodAsync(tcs, methodName, className, module, inApplication, parameters);
                 result = await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -655,6 +680,8 @@ namespace DotNet2Fox
             {
                 foxRun.CreateNewObjectAsync(tcs, className, module, inApplication, parameters);
                 result = await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -711,6 +738,8 @@ namespace DotNet2Fox
                 foxRun.DoAsync(tcs, program, inProgram, parameters);
                 // Await (rather than returning Task) allows exception handling here
                 await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -766,6 +795,8 @@ namespace DotNet2Fox
             {
                 foxRun.ExecScriptAsync(tcs, script, parameters);
                 result = await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -815,6 +846,8 @@ namespace DotNet2Fox
             {
                 foxRun.CallObjectMethodAsync(tcs, foxObject, methodName, parameters);
                 result = await tcs.Task;
+                // Delay allows Fox callback to complete and avoid deadlock when releasing foxCOM object
+                await Task.Delay(1);
             }
             catch (Exception ex)
             {
@@ -910,7 +943,7 @@ namespace DotNet2Fox
         /// </summary>
         private void CreateTimer()
         {
-            foxTimer = new Timer();
+            foxTimer = new System.Timers.Timer();
             foxTimer.AutoReset = false;
             foxTimer.Interval = foxTimeout * 1000;
             foxTimer.Elapsed += OnTimerElapsed;
@@ -965,7 +998,44 @@ namespace DotNet2Fox
                     }
                     else
                     {
-                        foxCOM = Activator.CreateInstance(Type.GetTypeFromProgID("FoxCOM.Application", true));
+
+                        if (!string.IsNullOrWhiteSpace(regFreeFoxCOMPath) && File.Exists(regFreeFoxCOMPath))
+                        {
+                            // Use reg-free COM
+                            // Starting from multiple threads can confuse COM, so start one at a time.
+                            // Use named mutex to control across multiple processes.
+                            const string mutexName = "DotNet2Fox.RegFreeCOM";
+                            using (Mutex mtx = new Mutex(false, mutexName))
+                            {
+                                mtx.WaitOne();
+                                const string foxComClassId = "{56458AED-AFB5-4F73-B399-70ABAB55DD57}";
+                                var process = Process.Start(regFreeFoxCOMPath, "/automation");
+                                process.WaitForInputIdle(); // wait for FoxCOM to fully start before activating
+                                while (true)
+                                { 
+                                    var type = Type.GetTypeFromCLSID(new Guid(foxComClassId), "JOELHOME", true);
+                                    foxCOM = Activator.CreateInstance(type);
+                                    // Make sure using same process as launched above
+                                    // A different process could be launched if FoxCOM.exe is registered elsewhere.
+                                    //  If so, release it and try again.
+                                    if (foxCOM.VFP.ProcessId == process.Id)
+                                    {
+                                        break;
+                                    }
+                                    else { 
+                                        Marshal.ReleaseComObject(foxCOM);
+                                        foxCOM = null;
+                                    }
+                                }
+                                mtx.ReleaseMutex();
+                            }
+                        }
+                        else
+                        {
+                            // Use registered FoxCOM.exe
+                            foxCOM = Activator.CreateInstance(Type.GetTypeFromProgID("FoxCOM.Application", true));
+                        }
+
                         // lQuitOnDestroy was previously only required in debug mode
                         // Errors during async calls could cause "Cannot Quit Visual FoxPro" issue
                         // Setting lQuitOnDestroy prevents that from happening, and doesn't cause other issues

@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using System.IO;
+using System.Reflection;
 
 namespace DotNet2Fox.Tests
 {
@@ -35,6 +37,36 @@ namespace DotNet2Fox.Tests
                 Assert.AreEqual(result, 2);
             }
             FoxPool.ClearPool();
+        }
+
+        [TestMethod()]
+        public void PoolGetObjectRegFreeCOMTest()
+        {
+            Debug.WriteLine(DateTime.Now.ToString());
+            FoxPool.DebugMode = false;
+            FoxPool.RegFreeFoxCOMPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";
+            using (Fox fox = FoxPool.GetObject("FoxTests"))
+            {
+                var result = fox.Eval("1+1");
+                Assert.AreEqual(result, 2);
+            }
+            FoxPool.ClearPool();
+            FoxPool.RegFreeFoxCOMPath = "";
+        }
+
+        [TestMethod()]
+        public async Task PoolGetObjectRegFreeCOMAsyncTest()
+        {
+            Debug.WriteLine(DateTime.Now.ToString());
+            FoxPool.DebugMode = false;
+            FoxPool.RegFreeFoxCOMPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";
+            using (Fox fox = await FoxPool.GetObjectAsync("FoxTests"))
+            {
+                var result = await fox.EvalAsync("1+1");
+                Assert.AreEqual(result, 2);
+            }
+            FoxPool.ClearPool();
+            FoxPool.RegFreeFoxCOMPath = "";
         }
 
         private void LoadTest(int iterations)
@@ -135,6 +167,42 @@ namespace DotNet2Fox.Tests
         {
             FoxPool.DebugMode = true;
             await LoadTestAsync(50);
+        }
+
+        [TestMethod()]
+        public void PoolRegFreeCOMLoadTest()
+        {
+            // Kill any running FoxCOM.exe processes first
+            foreach (var process in Process.GetProcessesByName("foxcom"))
+            {
+                process.Kill();
+            }
+            FoxPool.PoolSize = 96;
+            FoxPool.DebugMode = false;
+            FoxPool.RegFreeFoxCOMPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";
+            LoadTest(100);
+            FoxPool.RegFreeFoxCOMPath = "";
+            // No FoxCOM.exe processes should remain open. Give them time to close first.
+            Thread.Sleep(1000);
+            Assert.AreEqual(0, Process.GetProcessesByName("foxcom").Length);
+        }
+
+        [TestMethod()]
+        public async Task PoolRegFreeCOMLoadTestAsync()
+        {
+            // Kill any running FoxCOM.exe processes first
+            foreach (var process in Process.GetProcessesByName("foxcom"))
+            {
+                process.Kill();
+            }
+            FoxPool.PoolSize = 96;
+            FoxPool.DebugMode = false;
+            FoxPool.RegFreeFoxCOMPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";
+            await LoadTestAsync(100);
+            FoxPool.RegFreeFoxCOMPath = "";
+            // No FoxCOM.exe processes should remain open. Give them time to close first.
+            await Task.Delay(1000);
+            Assert.AreEqual(0, Process.GetProcessesByName("foxcom").Length);
         }
 
         [TestMethod()]

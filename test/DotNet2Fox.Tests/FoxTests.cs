@@ -3,6 +3,8 @@ using System;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
+using System.Reflection;
+using System.Threading;
 
 namespace DotNet2Fox.Tests
 {
@@ -64,6 +66,46 @@ namespace DotNet2Fox.Tests
                 var result = fox.Eval("1+1");
                 Assert.AreEqual(result, 2);
             }
+        }
+
+        [TestMethod()]
+        public void EvalRegFreeCOMTest()
+        {
+            // Kill any running FoxCOM.exe processes first
+            foreach (var process in Process.GetProcessesByName("foxcom"))
+            {
+                process.Kill();
+            }
+            string foxCOMEXE = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";             
+            using (Fox fox = new Fox("FoxTests", null, 60, false, regFreeFoxCOMPath: foxCOMEXE))
+            {
+                fox.StartRequest("FoxTests");
+                var result = fox.Eval("1+1");
+                Assert.AreEqual(result, 2);
+            }
+            // No FoxCOM.exe processes should remain open. Give them time to close first.
+            Thread.Sleep(1000);
+            Assert.AreEqual(0, Process.GetProcessesByName("foxcom").Length);
+        }
+
+        [TestMethod()]
+        public async Task EvalAsyncRegFreeCOMTest()
+        {
+            // Kill any running FoxCOM.exe processes first
+            foreach (var process in Process.GetProcessesByName("foxcom"))
+            {
+                process.Kill();
+            }
+            string foxCOMEXE = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\FoxCOM.exe";
+            using (Fox fox = new Fox("FoxTests", null, 60, false, regFreeFoxCOMPath: foxCOMEXE))
+            {
+                fox.StartRequest("FoxTests");
+                var result = await fox.EvalAsync("1+1");
+                Assert.AreEqual(result, 2);
+            }
+            // No FoxCOM.exe processes should remain open. Give them time to close first.
+            await Task.Delay(1000);
+            Assert.AreEqual(0, Process.GetProcessesByName("foxcom").Length);
         }
 
         [TestMethod()]
