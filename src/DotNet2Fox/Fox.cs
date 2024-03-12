@@ -1013,7 +1013,7 @@ namespace DotNet2Fox
                                 process.WaitForInputIdle(); // wait for FoxCOM to fully start before activating
                                 while (true)
                                 { 
-                                    var type = Type.GetTypeFromCLSID(new Guid(foxComClassId), "JOELHOME", true);
+                                    var type = Type.GetTypeFromCLSID(new Guid(foxComClassId), true);
                                     foxCOM = Activator.CreateInstance(type);
                                     // Make sure using same process as launched above
                                     // A different process could be launched if FoxCOM.exe is registered elsewhere.
