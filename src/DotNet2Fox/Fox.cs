@@ -1009,10 +1009,15 @@ namespace DotNet2Fox
                             {
                                 mtx.WaitOne();
                                 const string foxComClassId = "{56458AED-AFB5-4F73-B399-70ABAB55DD57}";
-                                var process = Process.Start(regFreeFoxCOMPath, "/automation");
-                                process.WaitForInputIdle(); // wait for FoxCOM to fully start before activating
+                                Process process = null;
+                                int retries = 0;
                                 while (true)
-                                { 
+                                {
+                                    if (process is null || process.HasExited)
+                                    {
+                                        process = Process.Start(regFreeFoxCOMPath, "/automation");
+                                        process.WaitForInputIdle(); // wait for FoxCOM to fully start before activating
+                                    }
                                     var type = Type.GetTypeFromCLSID(new Guid(foxComClassId), true);
                                     foxCOM = Activator.CreateInstance(type);
                                     // Make sure using same process as launched above
@@ -1022,7 +1027,13 @@ namespace DotNet2Fox
                                     {
                                         break;
                                     }
-                                    else { 
+                                    else {
+                                        // Retry a set number of times.  If it doesn't find correct process, stick with current process.
+                                        retries++;
+                                        if (retries >= 10)
+                                        {
+                                            break;
+                                        }
                                         Marshal.ReleaseComObject(foxCOM);
                                         foxCOM = null;
                                     }
