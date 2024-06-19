@@ -1015,7 +1015,8 @@ namespace DotNet2Fox
                                 {
                                     if (process is null || process.HasExited)
                                     {
-                                        process = Process.Start(regFreeFoxCOMPath, "/automation");
+                                        // Include Id in command line for troubleshooting
+                                        process = Process.Start(regFreeFoxCOMPath, "/automation " + Id);
                                         process.WaitForInputIdle(); // wait for FoxCOM to fully start before activating
                                     }
                                     var type = Type.GetTypeFromCLSID(new Guid(foxComClassId), true);
