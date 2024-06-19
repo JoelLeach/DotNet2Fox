@@ -1036,7 +1036,7 @@ namespace DotNet2Fox
                                             // If giving up, close process that was launched
                                             if (process != null)
                                             {
-                                                process.CloseMainWindow();
+                                                process.Kill();
                                             }
                                             break;
                                         }
