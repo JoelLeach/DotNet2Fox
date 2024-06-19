@@ -1033,10 +1033,18 @@ namespace DotNet2Fox
                                         retries++;
                                         if (retries >= 10)
                                         {
+                                            // If giving up, close process that was launched
+                                            if (process != null)
+                                            {
+                                                process.CloseMainWindow();
+                                            }
                                             break;
                                         }
                                         Marshal.ReleaseComObject(foxCOM);
                                         foxCOM = null;
+                                        // Give process more time to launch before trying again
+                                        // Using Thread.Sleep instead of Task.Delay to avoid any potential async/thread issues
+                                        Thread.Sleep(100);
                                     }
                                 }
                                 mtx.ReleaseMutex();
