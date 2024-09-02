@@ -14,7 +14,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
-    <Copyright>Copyright © 2021 Joel Leach</Copyright>
+    <Copyright>Copyright © 2024 Joel Leach</Copyright>
+    <Version>1.1.0</Version>
   </PropertyGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
     <None Include="..\FoxCOM\foxcom.prg">
